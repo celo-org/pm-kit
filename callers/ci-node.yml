@@ -20,5 +20,6 @@ jobs:
     with:
       node-version: '24'
       # working-directory: apps/web        # monorepo
+      # setup-command: pnpm --filter api prisma generate   # codegen before typecheck
       # build-env: |                       # dummy env for `next build`
       #   NEXT_PUBLIC_API_URL=http://localhost:3000

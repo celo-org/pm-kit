@@ -21,6 +21,10 @@ on:
         description: Subdirectory containing package.json (monorepos)
         type: string
         default: '.'
+      setup-command:
+        description: Command run after install, before lint/typecheck (e.g. codegen like `pnpm --filter api prisma generate`)
+        type: string
+        default: ''
       run-build:
         type: boolean
         default: true
@@ -79,6 +83,10 @@ jobs:
             bun)  bun install --frozen-lockfile ;;
             npm)  if [ -f package-lock.json ]; then npm ci; else npm install; fi ;;
           esac
+
+      - name: Setup (codegen)
+        if: inputs.setup-command != ''
+        run: ${{ inputs.setup-command }}
 
       - name: Require lint + test scripts
         run: |
