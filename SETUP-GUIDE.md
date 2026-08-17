@@ -94,10 +94,10 @@ Watch the Actions tab — this first PR is your CI green light.
 
 **Yes, especially for you.** The moment agents open PRs and five people ship to five products, `main` is the only thing standing between "CI exists" and "CI matters." Unprotected, anyone (or any agent) can push straight to `main` and CI becomes advisory. Protection is what turns your tests and linting into a gate.
 
-**Basic protection for a small team is four rules plus repo settings** (the kit's `ruleset-main.json` + `apply-protection.sh` contain precisely these — each one closes a real incident from the Mondeto team guide):
+**Basic protection for a small team is four rules plus repo settings** (the kit's `ruleset-main.json` + `apply-protection.sh` contain precisely these — each one closes a class of incident we've actually hit):
 
-1. **Require a pull request before merging, 1 approving review, stale approvals dismissed on push.** With 5 people, one approval is right. Dismiss-on-push means a Renovate re-roll from v10 to v11 can't ride on an approval written for v10 (#89).
-2. **Require the `ci` check to pass AND require the branch to be up to date with `main`** ("strict"). This is the one that matters most for you: a green check on a stale head no longer counts (#206, the coverage-gate PRs), and it mechanically forces the rebase between two lockfile PRs (#162, #212). The cost is one "Update branch" click per PR — worth it.
+1. **Require a pull request before merging, 1 approving review, stale approvals dismissed on push.** With 5 people, one approval is right. Dismiss-on-push means a Renovate re-roll to a new major can't ride on an approval written for the old one.
+2. **Require the `ci` check to pass AND require the branch to be up to date with `main`** ("strict"). This is the one that matters most for you: a green check on a stale head no longer counts, and it mechanically forces the rebase between two lockfile PRs. The cost is one "Update branch" click per PR — worth it.
 3. **Block force pushes.**
 4. **Block branch deletion.**
 
@@ -105,7 +105,7 @@ Watch the Actions tab — this first PR is your CI green light.
 
 Plus, in repo settings (the script does this): **squash merge only**, merge commits and rebase merges disabled, **PR title becomes the commit message**, PR body becomes the commit body, auto-merge enabled, delete branch on merge. That turns your squash convention from discipline into platform behaviour.
 
-Skip (for now): code-owner reviews, signed commits, linear history. **Merge queue** is the one to add later: if the strict up-to-date rule starts costing you (>~5 concurrent PRs on shared files, as in the composer overhaul), merge queue does the up-to-date test automatically and removes the clicks. Note that this ruleset closes what Mondeto's #199 scopes; once applied, the team guide's "know what is and isn't enforced" section can be rewritten to say it *is* enforced.
+Skip (for now): code-owner reviews, signed commits, linear history. **Merge queue** is the one to add later: if the strict up-to-date rule starts costing you (>~5 concurrent PRs on shared files), merge queue does the up-to-date test automatically and removes the clicks.
 
 **Plan check:** rulesets are enforced on private repos only on GitHub Team/Enterprise. celo-org is an organisation with ~300 repos and an org-level `.github`, so this is almost certainly covered — but verify once in Settings → Rules of any private repo (an unenforced ruleset shows an "upgrade" banner).
 
@@ -159,27 +159,27 @@ Two habits to add on the human side: when the research person generates stories 
 
 ---
 
-## Step 6b — Three playbooks, one rulebook: what went where and what contradicted
+## Step 6b — One rulebook: what's in it and the close calls
 
-Your Mondeto team guide, the celo-composer overhaul playbook, and the hardening playbook (#49–#82) are merged into **`templates/.claude/shared/engineering-rules.md`** — one document, synced to every repo, imported by every `CLAUDE.md`. Its §9 is the contradictions log; the decisions, briefly:
+The team's accumulated playbooks are merged into **`templates/.claude/shared/engineering-rules.md`** — one document, synced to every repo, imported by every `CLAUDE.md`. Its §9 records the close calls; the decisions, briefly:
 
-- **Branch names** (three-way): `<handle>/<issue>-<slug>` — Mondeto's handle prefix + agent-std's issue number; the type prefix (kit v1, agent-std) is dropped because it already lives in the Conventional-Commit title.
-- **"Squash to logical commits with trailers"** (agent-std) vs one-commit squash-merge: the PR *body* is the commit message on `main` (repo setting), so rationale/verification/limits/trailers live there — same content, the place the platform preserves.
+- **Branch names**: `<handle>/<issue>-<slug>` — the type prefix is dropped because it already lives in the Conventional-Commit title; the handle answers "whose is this", the issue number links branch → ticket.
+- **"Squash to logical commits with trailers"** vs one-commit squash-merge: the PR *body* is the commit message on `main` (repo setting), so rationale/verification/limits/trailers live there — same content, the place the platform preserves.
 - **Issue granularity**: not a real conflict once you separate the two tests — *same-diff* (merge tickets the same diff would close) and *different-schedule* (split items that would be prioritised differently). Both are in the rules and in `/file-issue`.
-- **Required thread resolution** (kit v2) vs **approve-with-nits** (hardening): dropped both — no ruleset click-blocking, and no approving over open nits. Every finding is fixed on the PR or lands in a filed issue before approval.
-- **Strict up-to-date** (Mondeto lockfile incidents) vs **parallelism tax** (composer §7): kept strict — production broke twice; the tax is a click. Merge queue is the escape hatch when the queue gets deep.
-- **Squash-only** vs **stacked PRs** (hardening): kept squash; stacks ≤ 2 deep, second-lander rebases `--onto main`.
-- **P0/P1/P2** (kit v1) vs **`priority:*`** (Mondeto): `priority:critical|high|medium|low`, with critical defined.
+- **Required thread resolution** vs **approve-with-nits**: dropped both — no ruleset click-blocking, and no approving over open nits. Every finding is fixed on the PR or lands in a filed issue before approval.
+- **Strict up-to-date** vs **parallelism tax**: kept strict — stale-head merges have broken production; the tax is a click. Merge queue is the escape hatch when the queue gets deep.
+- **Squash-only** vs **stacked PRs**: kept squash; stacks ≤ 2 deep, second-lander rebases `--onto main`.
+- **P0/P1/P2** vs **`priority:*`**: `priority:critical|high|medium|low`, with critical defined.
 - **"Never silent force-push"** vs squash culture: force-pushing your own PR branch is fine; announcing what changed is the rule.
-- **Uniform max-rigour review** (composer §3) vs its own retrospective (§7): tiered — mechanical gets read + CI; logic/money/wallet gets run-it-and-refute. Real CI is what makes the light tier safe, which is why CI is Step 1.
+- **Uniform max-rigour review** vs cost: tiered — mechanical gets read + CI; logic/money/wallet gets run-it-and-refute. Real CI is what makes the light tier safe, which is why CI is Step 1.
 
-**Agent-assisted-development standards** (fourth playbook) added the feedback-resolution protocol (reproduce → fix → audit your own fix → report what it taught → push back only with a measurement → defer ownership calls), seam tests over unit tests, guarantee-on-every-path, error-body leakage, read bounds on write paths, config-safety rules, judgement-calls section in the PR template, CI proven in both directions, strike-through-never-delete for wrong claims, SHA-pinned prior art, and `/close-pr` for capturing value from unmerged work.
+The rules also encode the agent-era practices: the feedback-resolution protocol (reproduce → fix → audit your own fix → report what it taught → push back only with a measurement → defer ownership calls), seam tests over unit tests, guarantee-on-every-path, error-body leakage, read bounds on write paths, config-safety rules, judgement-calls section in the PR template, CI proven in both directions, strike-through-never-delete for wrong claims, SHA-pinned prior art, and `/close-pr` for capturing value from unmerged work.
 
-**Tester mode** (from mini-quiz's first native-CELO payout, which surfaced #19–#21) is now a generic shared pattern — two DB flags, server-side gating at every surface, downstream flag-blind, verify at the source of truth — with a porting checklist for the other products; the money-path checklist asks "has it run in anger?" before any real-money path goes public.
+**Tester mode** — born from our first real-money payout, which surfaced three bugs no offline test could reach — is a generic shared pattern: two DB flags, server-side gating at every surface, downstream flag-blind, verify at the source of truth, with a porting checklist for the other products. The money-path checklist asks "has it run in anger?" before any real-money path goes public.
 
-The 18-item **money-path checklist** (hardening §7 + Mondeto's payout-parity and fee-omission incidents) is its own synced file, referenced from the PR template and `/review-pr`.
+The 18-item **money-path checklist** (payout parity, fee omission, self-referential verification, and the rest) is its own synced file, referenced from the PR template and `/review-pr`.
 
-Two lessons became CI code rather than prose: Node is pinned from `.nvmrc` (hardening #73's floating runner version), and typecheck uses `npx --no-install tsc` (composer's placeholder-package `tsc` that certified 21 syntax errors).
+Two lessons became CI code rather than prose: Node is pinned from `.nvmrc` (a floating runner version once turned main red with no commit behind it), and typecheck uses `npx --no-install tsc` (npm's placeholder package named `tsc` once certified 21 syntax errors as a passing "TypeScript check").
 
 ---
 
