@@ -61,7 +61,8 @@ if [ -f CLAUDE.md ]; then
 else
   name=$(basename "$(pwd)")
   if [ -f package.json ] && command -v jq >/dev/null; then n=$(jq -r '.name // empty' package.json 2>/dev/null || true); [ -n "$n" ] && name="$n"; fi
-  sed -e "s/{{PROJECT_NAME}}/$name/g" -e "s/{{PM}}/$pm/g" "$KIT/templates/CLAUDE.md.template" > CLAUDE.md
+  # `|` delimiter: scoped package names (@scope/name) contain `/`
+  sed -e "s|{{PROJECT_NAME}}|$name|g" -e "s|{{PM}}|$pm|g" "$KIT/templates/CLAUDE.md.template" > CLAUDE.md
   echo "  added: CLAUDE.md — fill in the {{...}} placeholders (or ask Claude Code to)"
 fi
 
