@@ -1,10 +1,12 @@
 # Runs IN THE pm-kit REPO. When anything under templates/ changes on main, opens a PR
 # in every target repo (listed in sync/sync.yml) with the updated files.
-# Uses BetaHuhn/repo-file-sync-action — works across orgs (mondeto + celo-org) as long as
-# the PAT can push branches / open PRs there.
+# Uses BetaHuhn/repo-file-sync-action with a short-lived token minted from the
+# org's template-sync GitHub App — no personal PAT, nothing that expires with a person.
 #
-# One-time setup: create a fine-grained PAT (Contents: write, Pull requests: write,
-# Workflows: write on the target repos) and add it as secret GH_PAT on the pm-kit repo.
+# One-time setup on this repo (Settings → Secrets and variables → Actions):
+#   - Repository variable TEMPLATE_SYNC_APP_CLIENT_ID  — the sync app's client ID (not secret)
+#   - Repository secret  TEMPLATE_SYNC_APP_PRIVATE_KEY — the app's full PEM, including BEGIN/END lines
+# The app must be installed on the target repos with Contents: write and Pull requests: write.
 name: Sync templates to repos
 
 on:
@@ -23,10 +25,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Generate template-sync token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.TEMPLATE_SYNC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TEMPLATE_SYNC_APP_PRIVATE_KEY }}
+          owner: celo-org
+          # Must cover every repo in sync/sync.yml
+          repositories: |
+            mondeto
+            mondeto-admin
+            saluto
+            mini-quiz
+            x402-facilitator
+            askbots
+            celo-composer
+            docs
+
       - name: Run repo file sync
         uses: BetaHuhn/repo-file-sync-action@v1
         with:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ steps.app-token.outputs.token }}
           CONFIG_PATH: sync/sync.yml
           COMMIT_PREFIX: 'chore(kit): '
           PR_LABELS: chore

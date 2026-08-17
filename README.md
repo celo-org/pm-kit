@@ -14,7 +14,7 @@ Repos don't copy this kit; they **point at it**. Change something here, and it r
 ## Setup (once)
 
 1. Create this as `celo-org/pm-kit`. All target repos are in celo-org, so it can be **internal or private** — just enable Settings → Actions → General → Access: "Accessible from repositories in the organization" so the reusable workflows can be called. (Public also works and lets the plugin marketplace be added by anyone.)
-2. Add secret `GH_PAT` (fine-grained PAT: Contents RW, Pull requests RW, Workflows RW, Metadata R on the target repos) so the sync can open PRs.
+2. Wire the template-sync GitHub App (org-owned, no expiry): add repository variable `TEMPLATE_SYNC_APP_CLIENT_ID` and repository secret `TEMPLATE_SYNC_APP_PRIVATE_KEY` (the app's full PEM). The app needs Contents RW + Pull requests RW and must be installed on the target repos.
 3. Pin the reusable workflow ref: `@main` is convenient; for stability tag releases (`v1`) and point callers at `@v1`.
 
 ## Team setup (each person, ~2 min)

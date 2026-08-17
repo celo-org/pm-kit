@@ -10,7 +10,7 @@ Pairs with the `pm-kit` folder. Budget: ~1 hour to publish pm-kit as a repo (onc
 **Don't copy the kit into eight repos — publish it once as `celo-org/pm-kit` and have repos point at it.** Otherwise you own eight drifting copies. Three mechanisms, each matched to what changes how often:
 
 - **CI logic → reusable workflows.** Each repo has a 12-line `ci.yml` that just says `uses: celo-org/pm-kit/.github/workflows/ci-node.yml@main`. Change the steps in pm-kit; every repo runs the new version on its next PR. Zero per-repo work. (pm-kit can be internal/private since everything is in celo-org — enable Actions access "from repositories in the organization". Optionally tag `v1` and pin callers to it for stability.)
-- **Templates and shared rules → sync PRs.** Issue forms, PR template, `engineering-rules.md`, `money-path-checklist.md`, `renovate.json` live under `pm-kit/templates/`. A workflow in pm-kit (`sync-templates.yml`, using `BetaHuhn/repo-file-sync-action`) opens a PR into every repo listed in `sync/sync.yml` whenever those files change on `main`. Needs one fine-grained PAT stored as `GH_PAT` in pm-kit. You review and merge those PRs like any other — which is also your audit trail of rule changes.
+- **Templates and shared rules → sync PRs.** Issue forms, PR template, `engineering-rules.md`, `money-path-checklist.md`, `renovate.json` live under `pm-kit/templates/`. A workflow in pm-kit (`sync-templates.yml`, using `BetaHuhn/repo-file-sync-action`) opens a PR into every repo listed in `sync/sync.yml` whenever those files change on `main`. Auth comes from an org-owned GitHub App (client-ID variable + private-key secret on pm-kit; a short-lived token is minted per run). You review and merge those PRs like any other — which is also your audit trail of rule changes.
 - **Claude commands → plugin marketplace.** `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge` are a Claude Code plugin in pm-kit. Everyone installs once (`claude plugin marketplace add celo-org/pm-kit && claude plugin install pm-kit@pm-kit`) and gets updates with `claude plugin update pm-kit`.
 
 The **only** files a repo owns are its `CLAUDE.md` (project description, commands, architecture, gotchas — it *imports* the shared rules with `@.claude/shared/engineering-rules.md`, so rules aren't restated per repo) and its CI caller's inputs (Node version, monorepo directory, dummy build env). Branch protection and labels are applied by script, idempotently — re-run whenever the ruleset changes.
@@ -38,7 +38,7 @@ Unzip the kit somewhere permanent, e.g. `~/claude-pm-kit/`.
 
 From each repo's root:
 
-First publish pm-kit (once): create `celo-org/pm-kit`, push the folder, enable Actions org access, add the `GH_PAT` secret (fine-grained, scoped to the eight repos). Then per repo:
+First publish pm-kit (once): create `celo-org/pm-kit`, push the folder, enable Actions org access, and wire the template-sync GitHub App (`TEMPLATE_SYNC_APP_CLIENT_ID` variable + `TEMPLATE_SYNC_APP_PRIVATE_KEY` secret). Then per repo:
 
 ```bash
 cd ~/code/mondeto
