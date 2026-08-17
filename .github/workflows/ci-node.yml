@@ -64,16 +64,22 @@ jobs:
         if: steps.detect.outputs.pm == 'bun'
         uses: oven-sh/setup-bun@v2
 
+      # pnpm/yarn must be on PATH before setup-node: its cache step runs
+      # `pnpm store path` / `yarn cache dir` and fails if the binary is missing.
+      - name: Setup pnpm
+        if: steps.detect.outputs.pm == 'pnpm'
+        uses: pnpm/action-setup@v4
+
+      - name: Enable corepack (yarn)
+        if: steps.detect.outputs.pm == 'yarn'
+        run: corepack enable
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ steps.detect.outputs.node }}
           cache: ${{ steps.detect.outputs.pm != 'bun' && steps.detect.outputs.pm || '' }}
           cache-dependency-path: ${{ inputs.working-directory }}
-
-      - name: Enable corepack
-        if: steps.detect.outputs.pm == 'pnpm' || steps.detect.outputs.pm == 'yarn'
-        run: corepack enable
 
       - name: Install (frozen lockfile)
         run: |
