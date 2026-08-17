@@ -1,0 +1,40 @@
+# repo-file-sync-action config. Files under templates/ are pushed to each target repo.
+# Paths on the left are in pm-kit; `dest` is the path in the target repo.
+# Repo-specific files (CLAUDE.md, the CI caller) are deliberately NOT synced —
+# they're owned by each repo. Only shared, identical-everywhere files go here.
+#
+# Why not celo-org/.github (org default community files)? It exists, but it is the default for
+# ~300 celo-org repos that don't override it. Our issue/PR templates are team conventions, not
+# org-wide policy — syncing into our 8 repos keeps them scoped. If the org later adopts them,
+# move them there and drop this group.
+
+group:
+  - repos: |
+      celo-org/mondeto-admin
+      celo-org/mondeto
+      celo-org/saluto
+      celo-org/mini-quiz
+      celo-org/x402-facilitator
+      celo-org/askbots
+      celo-org/celo-composer
+      celo-org/docs
+    files:
+      - source: templates/.github/ISSUE_TEMPLATE/
+        dest: .github/ISSUE_TEMPLATE/
+      - source: templates/.github/PULL_REQUEST_TEMPLATE.md
+        dest: .github/PULL_REQUEST_TEMPLATE.md
+      - source: templates/.claude/shared/engineering-rules.md
+        dest: .claude/shared/engineering-rules.md
+      - source: templates/.claude/shared/money-path-checklist.md
+        dest: .claude/shared/money-path-checklist.md
+      - source: templates/.claude/shared/tester-mode-pattern.md
+        dest: .claude/shared/tester-mode-pattern.md
+
+  # renovate.json only for repos that use Renovate and don't have their own
+  - repos: |
+      celo-org/mondeto-admin
+      celo-org/mondeto
+      celo-org/saluto
+    files:
+      - source: templates/renovate.json
+        dest: renovate.json

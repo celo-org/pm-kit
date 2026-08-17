@@ -1,0 +1,31 @@
+# Reusable: on a release tag, verify tag == package.json version. Never invent versions.
+# For published packages (e.g. celo-composer). Caller: on: push: tags: ['v*'].
+name: verify-release-version (reusable)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify-release-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must equal package.json version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(jq -r .version package.json)
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Tag v$tag != package.json version $pkg. The version lives in the repo; tooling reads it."
+            exit 1
+          fi
+          echo "OK: v$tag matches package.json"
+      - name: Changelog has an entry for this version
+        run: |
+          if [ -f CHANGELOG.md ] && ! grep -q "$(jq -r .version package.json)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for $(jq -r .version package.json). Changelog entries land with the change."
+            exit 1
+          fi

@@ -1,0 +1,42 @@
+# CI for Solidity projects using Hardhat.
+# Use this INSTEAD of ci.yml in a contracts repo, or alongside it (rename the job) in a monorepo.
+name: ci-hardhat (reusable)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || 'npm' }}
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: |
+          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then yarn install
+          else npm ci; fi
+
+      - name: Lint Solidity (solhint, if configured)
+        run: |
+          if [ -f .solhint.json ]; then npx solhint 'contracts/**/*.sol'; else echo "No .solhint.json — skipping (consider adding solhint)"; fi
+
+      - name: Compile
+        run: npx hardhat compile
+
+      - name: Test
+        run: npx hardhat test

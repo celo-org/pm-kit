@@ -1,0 +1,120 @@
+# Reusable CI for Node / TypeScript / Next.js repos.
+# Called from each repo via callers/ci-node.yml — update HERE, every repo picks it up.
+#
+# Lessons encoded:
+#  - fails if `lint`/`test` scripts are missing (a green check must mean something —
+#    "for days CI was secret-scanning only; every broken PR was green")
+#  - `npx --no-install tsc` so a missing typescript fails loudly instead of resolving to
+#    npm's placeholder package named `tsc` (which "certified 21 syntax errors as green")
+#  - Node version pinned from .nvmrc / .node-version / input, never floating
+#    ("main going red with no commit behind it: the runner's floating Node version")
+name: ci-node (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Fallback Node version if the repo has no .nvmrc/.node-version
+        type: string
+        default: '24'
+      working-directory:
+        description: Subdirectory containing package.json (monorepos)
+        type: string
+        default: '.'
+      run-build:
+        type: boolean
+        default: true
+      build-env:
+        description: Newline-separated KEY=VALUE pairs exported before build (dummy env for next build)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect package manager and Node version
+        id: detect
+        run: |
+          if [ -f pnpm-lock.yaml ]; then pm=pnpm
+          elif [ -f yarn.lock ]; then pm=yarn
+          elif [ -f bun.lock ] || [ -f bun.lockb ]; then pm=bun
+          else pm=npm; fi
+          echo "pm=$pm" >> "$GITHUB_OUTPUT"
+          if [ -f .nvmrc ]; then nv=$(tr -d 'v \n' < .nvmrc)
+          elif [ -f .node-version ]; then nv=$(tr -d 'v \n' < .node-version)
+          else nv="${{ inputs.node-version }}"; fi
+          echo "node=$nv" >> "$GITHUB_OUTPUT"
+          echo "package manager: $pm, node: $nv"
+
+      - name: Setup Bun
+        if: steps.detect.outputs.pm == 'bun'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.detect.outputs.node }}
+          cache: ${{ steps.detect.outputs.pm != 'bun' && steps.detect.outputs.pm || '' }}
+          cache-dependency-path: ${{ inputs.working-directory }}
+
+      - name: Enable corepack
+        if: steps.detect.outputs.pm == 'pnpm' || steps.detect.outputs.pm == 'yarn'
+        run: corepack enable
+
+      - name: Install (frozen lockfile)
+        run: |
+          case "${{ steps.detect.outputs.pm }}" in
+            pnpm) pnpm install --frozen-lockfile ;;
+            yarn) yarn install --immutable 2>/dev/null || yarn install --frozen-lockfile ;;
+            bun)  bun install --frozen-lockfile ;;
+            npm)  if [ -f package-lock.json ]; then npm ci; else npm install; fi ;;
+          esac
+
+      - name: Require lint + test scripts
+        run: |
+          missing=""
+          jq -e '.scripts.lint' package.json >/dev/null || missing="$missing lint"
+          jq -e '.scripts.test' package.json >/dev/null || missing="$missing test"
+          if [ -n "$missing" ]; then
+            echo "::error::package.json is missing required scripts:$missing — every project must lint and test."
+            exit 1
+          fi
+
+      - name: Lint
+        run: ${{ steps.detect.outputs.pm }} run lint
+
+      - name: Typecheck
+        if: hashFiles(format('{0}/tsconfig.json', inputs.working-directory)) != ''
+        run: |
+          if jq -e '.scripts.typecheck' package.json >/dev/null; then
+            ${{ steps.detect.outputs.pm }} run typecheck
+          else
+            npx --no-install tsc --noEmit
+          fi
+
+      - name: Test
+        run: ${{ steps.detect.outputs.pm }} run test
+
+      - name: Build
+        if: inputs.run-build
+        run: |
+          if [ -n "${{ inputs.build-env }}" ]; then
+            while IFS= read -r line; do [ -n "$line" ] && export "$line"; done <<< "${{ inputs.build-env }}"
+          fi
+          if jq -e '.scripts.build' package.json >/dev/null; then
+            ${{ steps.detect.outputs.pm }} run build
+          else
+            echo "No build script — skipping"
+          fi
+        env:
+          CI: 'true'
