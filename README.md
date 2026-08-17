@@ -17,6 +17,21 @@ Repos don't copy this kit; they **point at it**. Change something here, and it r
 2. Add secret `GH_PAT` (fine-grained PAT: Contents RW, Pull requests RW, Workflows RW, Metadata R on the target repos) so the sync can open PRs.
 3. Pin the reusable workflow ref: `@main` is convenient; for stability tag releases (`v1`) and point callers at `@v1`.
 
+## Team setup (each person, ~2 min)
+
+Everything in this kit is repo-level except one thing: the Claude commands are installed per person.
+
+1. Prereqs: [Claude Code](https://claude.com/claude-code) and the [GitHub CLI](https://cli.github.com) (`gh auth login`).
+2. Install the commands:
+   ```bash
+   claude plugin marketplace add celo-org/pm-kit
+   claude plugin install pm-kit@pm-kit
+   ```
+3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`.
+4. Later updates: `claude plugin update pm-kit`.
+
+That's it — CI, templates, shared rules, and branch protection are already wired into the repos and need no per-person configuration.
+
 ## Bootstrap a repo
 
 ```bash
