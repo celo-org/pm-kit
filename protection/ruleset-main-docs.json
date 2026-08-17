@@ -1,5 +1,5 @@
 {
-  "name": "pm-kit-protect-main",
+  "name": "protect-main",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
@@ -8,17 +8,6 @@
         "~DEFAULT_BRANCH"
       ],
       "exclude": []
-    },
-    "repository_name": {
-      "include": [
-        "mondeto",
-        "mondeto-admin",
-        "saluto",
-        "mini-quiz",
-        "askbots"
-      ],
-      "exclude": [],
-      "protected": false
     }
   },
   "rules": [
@@ -44,7 +33,7 @@
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           {
-            "context": "ci / ci"
+            "context": "Check for broken links"
           }
         ]
       }
