@@ -48,7 +48,10 @@ for repo in "$@"; do
     echo "    ruleset 'protect-main' already exists — skipping (edit it in Settings > Rules)"
     continue
   fi
-  gh api "repos/$repo/rulesets" --method POST --input ruleset-main.json >/dev/null \
-    && echo "    applied ruleset 'protect-main'" \
+  # Repos whose required check differs from "ci / ci" get their own variant file.
+  ruleset="ruleset-main.json"
+  [ -f "ruleset-main-$(basename "$repo").json" ] && ruleset="ruleset-main-$(basename "$repo").json"
+  gh api "repos/$repo/rulesets" --method POST --input "$ruleset" >/dev/null \
+    && echo "    applied ruleset 'protect-main' ($ruleset)" \
     || echo "    FAILED — check you have admin rights and the plan supports rulesets on this repo (private repos need GitHub Pro/Team)"
 done
