@@ -1,0 +1,26 @@
+# CI for Mintlify documentation repos (docs.json present).
+# Note: celo-org/docs already has an equivalent workflow (docs-validation.yml) —
+# don't duplicate it there; this is for any NEW docs repo.
+name: ci-docs-mintlify (reusable)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Check for broken links
+        run: npx mintlify broken-links

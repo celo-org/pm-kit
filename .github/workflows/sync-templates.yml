@@ -1,0 +1,35 @@
+# Runs IN THE pm-kit REPO. When anything under templates/ changes on main, opens a PR
+# in every target repo (listed in sync/sync.yml) with the updated files.
+# Uses BetaHuhn/repo-file-sync-action — works across orgs (mondeto + celo-org) as long as
+# the PAT can push branches / open PRs there.
+#
+# One-time setup: create a fine-grained PAT (Contents: write, Pull requests: write,
+# Workflows: write on the target repos) and add it as secret GH_PAT on the pm-kit repo.
+name: Sync templates to repos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'templates/**'
+      - 'sync/sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run repo file sync
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          CONFIG_PATH: sync/sync.yml
+          COMMIT_PREFIX: 'chore(kit): '
+          PR_LABELS: chore
+          COMMIT_EACH_FILE: false
+          SKIP_PR: false
+          BRANCH_PREFIX: pm-kit-sync

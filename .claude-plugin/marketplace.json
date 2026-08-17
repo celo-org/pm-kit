@@ -1,0 +1,16 @@
+{
+  "name": "pm-kit",
+  "owner": {
+    "name": "Lena / Mondeto"
+  },
+  "metadata": {
+    "description": "Team engineering workflow: issue/PR/review commands and shared rules. Install once, `claude plugin update` to get changes."
+  },
+  "plugins": [
+    {
+      "name": "pm-kit",
+      "source": "./claude-plugin",
+      "description": "Commands: /file-issue, /write-pr, /review-pr, /post-merge, /close-pr \u2014 each enforces the team playbook (evidence over assertion, Closes vs Refs, tiered review, reproduce-then-fix, verify what closed)."
+    }
+  ]
+}

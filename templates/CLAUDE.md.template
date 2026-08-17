@@ -1,0 +1,49 @@
+# CLAUDE.md — {{PROJECT_NAME}}
+
+<!-- Repo-owned. Keep it LEAN: a router. Shared rules are imported below and synced from pm-kit —
+     don't restate them here. Every Claude session (local, Cowork, CI action) reads this. -->
+
+## What this project is
+
+{{ONE_PARAGRAPH: what the product does, who uses it, where it runs.}}
+
+## Commands
+
+- Install: `{{PM}} install`
+- Dev: `{{PM}} run dev`
+- Tests: `{{PM}} run test` — run after EVERY change
+- Lint / typecheck: `{{PM}} run lint` · `{{PM}} run typecheck`
+- Build: `{{PM}} run build`
+
+## Architecture pointers
+
+{{3-6 LINES: key directories and what lives there. Link docs/ for more.}}
+
+## Team rules (shared, synced — read them)
+
+@.claude/shared/engineering-rules.md
+
+Money/security diffs additionally run: @.claude/shared/money-path-checklist.md
+Before a real-money / real-send path goes public, it runs in production behind tester mode: @.claude/shared/tester-mode-pattern.md
+
+The ten you must never violate, even without reading the above:
+1. Never push to `main`. Branch `<handle>/<issue>-<slug>` → PR → squash. Title = the commit on `main` (Conventional Commits, scoped, outcome).
+2. One concern per PR, one fix-unit per issue, one priority per issue.
+3. Every change ships the test that fails on pre-fix code, through the seam it touches (route/CLI/component), and any prose guarantee is tested on its failure path. State the mutation count in the PR.
+4. `Closes #N` only if every acceptance box is met; otherwise `Refs #N`. After merge, check what actually closed.
+5. Every claim in an issue/PR/review is evidence-backed: commands + output, `file:line`. "Confirmed" means you ran it. Measured over reasoned — thresholds and constants pinned in a test, not a comment.
+6. Say what the PR does NOT do (with numbers). Say what it actually does, even beyond the ticket. Flag judgement calls and bundled product changes for the maintainer.
+7. On review feedback: reproduce first, fix, audit your own fix, report what it taught. Answer every point FIXED / NOT-FIXED / DISAGREE-with-measurement; never a silent push; never delete a wrong claim — strike it through.
+8. Use only existing labels: `bug` `enhancement` `chore` `priority:critical|high|medium|low` `status: triage`. Never invent labels.
+9. Ask before anything outward-facing or irreversible (external repos, posting, deleting, force-pushing shared branches). Propose, never execute.
+10. No secrets in diffs. New env vars → `.env.example` + runbook, in the same PR.
+
+Use the plugin commands: `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`.
+
+## Product context
+
+{{LINKS: PRDs, roadmap, designs, board URL. Content lives there, not here.}}
+
+## Gotchas
+
+{{SHORT LIST of things that repeatedly trip people/agents up here.}}

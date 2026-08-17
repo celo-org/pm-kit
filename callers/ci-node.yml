@@ -1,0 +1,24 @@
+# Thin caller — copy to <repo>/.github/workflows/ci.yml
+# The actual steps live in celo-org/pm-kit and update centrally.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: celo-org/pm-kit/.github/workflows/ci-node.yml@main
+    with:
+      node-version: '24'
+      # working-directory: apps/web        # monorepo
+      # build-env: |                       # dummy env for `next build`
+      #   NEXT_PUBLIC_API_URL=http://localhost:3000
