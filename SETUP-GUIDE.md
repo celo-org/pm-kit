@@ -101,7 +101,7 @@ Watch the Actions tab — this first PR is your CI green light.
 3. **Block force pushes.**
 4. **Block branch deletion.**
 
-(v2 also required review-thread resolution. Removed in v3 — see the contradictions log: it turns every nit into a click-blocker, which the hardening playbook's "approve-with-nits means mergeable now" rule explicitly forbids. The replacement mechanism is behavioural: every review point ends as a commit, a follow-up issue, or an explicit won't-do.)
+(v2 also required review-thread resolution. Removed in v3 — see the contradictions log: mechanical thread resolution turns review hygiene into click-blocking. The enforcement is behavioural instead, and strict: a PR is not approved while any finding is open, however small, and every review point ends as a fix commit, a *filed* follow-up issue, or an explicit won't-do.)
 
 Plus, in repo settings (the script does this): **squash merge only**, merge commits and rebase merges disabled, **PR title becomes the commit message**, PR body becomes the commit body, auto-merge enabled, delete branch on merge. That turns your squash convention from discipline into platform behaviour.
 
@@ -166,7 +166,7 @@ Your Mondeto team guide, the celo-composer overhaul playbook, and the hardening 
 - **Branch names** (three-way): `<handle>/<issue>-<slug>` — Mondeto's handle prefix + agent-std's issue number; the type prefix (kit v1, agent-std) is dropped because it already lives in the Conventional-Commit title.
 - **"Squash to logical commits with trailers"** (agent-std) vs one-commit squash-merge: the PR *body* is the commit message on `main` (repo setting), so rationale/verification/limits/trailers live there — same content, the place the platform preserves.
 - **Issue granularity**: not a real conflict once you separate the two tests — *same-diff* (merge tickets the same diff would close) and *different-schedule* (split items that would be prioritised differently). Both are in the rules and in `/file-issue`.
-- **Required thread resolution** (kit v2) vs **"nits are not soft blockers"** (hardening): dropped the ruleset rule; kept the behavioural one.
+- **Required thread resolution** (kit v2) vs **approve-with-nits** (hardening): dropped both — no ruleset click-blocking, and no approving over open nits. Every finding is fixed on the PR or lands in a filed issue before approval.
 - **Strict up-to-date** (Mondeto lockfile incidents) vs **parallelism tax** (composer §7): kept strict — production broke twice; the tax is a click. Merge queue is the escape hatch when the queue gets deep.
 - **Squash-only** vs **stacked PRs** (hardening): kept squash; stacks ≤ 2 deep, second-lander rebases `--onto main`.
 - **P0/P1/P2** (kit v1) vs **`priority:*`** (Mondeto): `priority:critical|high|medium|low`, with critical defined.
