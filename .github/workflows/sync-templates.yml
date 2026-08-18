@@ -48,7 +48,9 @@ jobs:
       - name: Run repo file sync
         uses: BetaHuhn/repo-file-sync-action@v1
         with:
-          GH_PAT: ${{ steps.app-token.outputs.token }}
+          GH_INSTALLATION_TOKEN: ${{ steps.app-token.outputs.token }}
+          GIT_USERNAME: celo-template-sync[bot]
+          GIT_EMAIL: 318017900+celo-template-sync[bot]@users.noreply.github.com
           CONFIG_PATH: sync/sync.yml
           COMMIT_PREFIX: 'chore(kit): '
           PR_LABELS: chore
