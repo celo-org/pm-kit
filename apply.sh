@@ -43,6 +43,9 @@ if [ -n "$src" ] && [ ! -e .github/workflows/ci.yml ]; then
 elif [ -e .github/workflows/ci.yml ]; then echo "  skip (exists): .github/workflows/ci.yml"
 else echo "  skipped (unknown stack) — pick a caller from $KIT/callers/"; fi
 
+# ---- Issue-priority labeler (repo-owned, like the CI caller) ----
+copy_if_absent "$KIT/callers/issue-priority-label.yml" ".github/workflows/issue-priority-label.yml"
+
 # ---- Templates + shared rules (kept in sync afterwards by pm-kit's sync workflow) ----
 echo "Templates & shared rules:"
 for f in "$KIT"/templates/.github/ISSUE_TEMPLATE/*.yml; do copy_if_absent "$f" ".github/ISSUE_TEMPLATE/$(basename "$f")"; done
