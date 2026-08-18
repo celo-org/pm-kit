@@ -37,7 +37,7 @@ The ten you must never violate, even without reading the above:
 9. Ask before anything outward-facing or irreversible (external repos, posting, deleting, force-pushing shared branches). Propose, never execute.
 10. No secrets in diffs. New env vars → `.env.example` + runbook, in the same PR.
 
-Use the plugin commands: `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`.
+Use the plugin commands: `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`. At board level: `/weekly-status` (Friday status from evidence), `/board-audit` (triage the backlog in buckets).
 
 ## Product context
 
