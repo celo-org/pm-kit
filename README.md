@@ -6,7 +6,7 @@ Repos don't copy this kit; they **point at it**. Change something here, and it r
 |---|---|---|---|
 | CI steps (lint, typecheck, test, build) | `.github/workflows/ci-*.yml` (reusable, `workflow_call`) | 12-line caller `.github/workflows/ci.yml` → `uses: celo-org/pm-kit/...@main` | Instantly — callers run whatever is on `main` here |
 | Issue forms, PR template, shared rules, money-path checklist, renovate.json | `templates/` | `.github/…`, `.claude/shared/…` | `sync-templates.yml` opens a PR in every repo listed in `sync/sync.yml` |
-| Claude commands `/file-issue` `/write-pr` `/review-pr` `/post-merge` `/close-pr` | `claude-plugin/` (plugin marketplace) | installed plugin | `claude plugin update pm-kit` |
+| Claude commands `/file-issue` `/write-pr` `/review-pr` `/post-merge` `/close-pr` `/weekly-status` `/board-audit` | `claude-plugin/` (plugin marketplace) | installed plugin | `claude plugin update pm-kit` |
 | Branch protection | `protection/org-ruleset-main.json` — **one org-level ruleset** targeting the 8 repos by name | — | edit the include list, re-run `apply-org-ruleset.sh` |
 | Merge settings (squash-only, title=commit, auto-merge) + labels | `protection/apply-protection.sh`, `create-labels.sh` | per-repo settings via API | re-run (idempotent) |
 | `CLAUDE.md` | `templates/CLAUDE.md.template` (starter only) | **repo-owned** — imports the synced shared rules with `@.claude/shared/engineering-rules.md` | manual; only project-specific content lives there |
@@ -27,7 +27,7 @@ Everything in this kit is repo-level except one thing: the Claude commands are i
    claude plugin marketplace add celo-org/pm-kit
    claude plugin install pm-kit@pm-kit
    ```
-3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`.
+3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit`.
 4. Later updates: `claude plugin update pm-kit`.
 
 That's it — CI, templates, shared rules, and branch protection are already wired into the repos and need no per-person configuration.
