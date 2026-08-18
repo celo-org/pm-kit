@@ -18,6 +18,7 @@ group:
       celo-org/askbots
       celo-org/celo-composer
       celo-org/docs
+      celo-org/celopedia-skills
     files:
       - source: templates/.github/ISSUE_TEMPLATE/
         dest: .github/ISSUE_TEMPLATE/
