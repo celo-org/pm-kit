@@ -43,6 +43,7 @@ jobs:
             askbots
             celo-composer
             docs
+            celopedia-skills
 
       - name: Run repo file sync
         uses: BetaHuhn/repo-file-sync-action@v1
