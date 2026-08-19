@@ -10,6 +10,8 @@
 #   - required check "ci" AND branch must be up to date with main (strict) — a green
 #     check on a stale head no longer counts; also forces the rebase before merging lockfile PRs
 #   - NOT requiring thread resolution (nits must not become soft blockers — rules §9); no force-push; no deletion
+#   - repo admins may bypass the PR gate in "pull_request" mode: they still open a PR but can merge it
+#     without the approval / ci check (emergency hotfix, CI outage). Direct push to main stays blocked.
 #
 # CHECK NAME: with the reusable-workflow caller, GitHub names the check "ci / ci"
 # (<caller job> / <called job>) — that's what ruleset-main.json requires.
