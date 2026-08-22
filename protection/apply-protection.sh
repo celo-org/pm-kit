@@ -13,6 +13,14 @@
 #   - repo admins may bypass the PR gate in "pull_request" mode: they still open a PR but can merge it
 #     without the approval / ci check (emergency hotfix, CI outage). Direct push to main stays blocked.
 #
+#   - write DEPLOY KEYS may bypass everything ("always" mode). This is the GitOps seam: a repo whose
+#     deploy is a CI job that commits back to main (mini-quiz: api-image.yml bumps the Helm image tag
+#     that Argo CD deploys from) pushes over SSH with a write deploy key. GITHUB_TOKEN cannot be granted
+#     a bypass (the API rejects the Actions integration as an actor), so without this the push is
+#     rejected with GH013 and deploys silently stall while the image build stays green. Inert on any
+#     repo with no write deploy key registered, which is why it is safe as the default. A bypass only
+#     works when it is on EVERY ruleset covering the ref, so it is in org-ruleset-main.json too.
+#
 # CHECK NAME: with the reusable-workflow caller, GitHub names the check "ci / ci"
 # (<caller job> / <called job>) — that's what ruleset-main.json requires.
 # Repos with their own CI (celo-composer: "test"; celo-org/docs: "Check for broken links")
@@ -46,13 +54,19 @@ for repo in "$@"; do
 
   # 2) Branch ruleset (skip when the org-level ruleset already covers this repo)
   if [ "${SKIP_REPO_RULESET:-0}" = "1" ]; then echo "    ruleset: skipped (org ruleset covers it)"; continue; fi
-  if gh api "repos/$repo/rulesets" --jq '.[].name' 2>/dev/null | grep -qx "protect-main"; then
-    echo "    ruleset 'protect-main' already exists — skipping (edit it in Settings > Rules)"
-    continue
-  fi
   # Repos whose required check differs from "ci / ci" get their own variant file.
   ruleset="ruleset-main.json"
   [ -f "ruleset-main-$(basename "$repo").json" ] && ruleset="ruleset-main-$(basename "$repo").json"
+  # Update in place when the ruleset already exists, so re-running this script converges
+  # the repo on the checked-in JSON instead of silently leaving a stale ruleset behind.
+  # (Lesson: a bypass added to the JSON never reached repos that had been applied earlier.)
+  existing=$(gh api "repos/$repo/rulesets" --jq '.[] | select(.source_type=="Repository" and .name=="protect-main") | .id' 2>/dev/null | head -1)
+  if [ -n "$existing" ]; then
+    gh api "repos/$repo/rulesets/$existing" --method PUT --input "$ruleset" >/dev/null \
+      && echo "    updated ruleset 'protect-main' (id $existing) from $ruleset" \
+      || echo "    FAILED to update ruleset $existing — need repo admin"
+    continue
+  fi
   gh api "repos/$repo/rulesets" --method POST --input "$ruleset" >/dev/null \
     && echo "    applied ruleset 'protect-main' ($ruleset)" \
     || echo "    FAILED — check you have admin rights and the plan supports rulesets on this repo (private repos need GitHub Pro/Team)"

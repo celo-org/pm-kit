@@ -105,6 +105,8 @@ Watch the Actions tab — this first PR is your CI green light.
 
 **Admin escape hatch:** the rulesets grant repo admins a bypass in **`pull_request` mode** — they still open a PR, but can merge it without the approval or the `ci` check (for an emergency hotfix or a CI outage). Direct push to `main` is *not* granted (that would be `always` mode), so the PR flow is never abandoned.
 
+**Deploy-key bypass (all rulesets):** write deploy keys are `always`-mode bypass actors. That is the GitOps seam — a repo whose deploy is a CI job that commits back to `main` (mini-quiz's `api-image.yml` bumps the Helm image tag Argo CD deploys from) pushes over SSH with a write deploy key. `GITHUB_TOKEN` cannot be put on a bypass list (the API rejects the Actions integration as an actor), so without this the push is rejected with `GH013` and deploys silently stall while the image build stays green. It is inert on any repo that registers no write deploy key, and it has to be on every ruleset covering the branch — repo-level and org-level — to take effect.
+
 Plus, in repo settings (the script does this): **squash merge only**, merge commits and rebase merges disabled, **PR title becomes the commit message**, PR body becomes the commit body, auto-merge enabled, delete branch on merge. That turns your squash convention from discipline into platform behaviour.
 
 Skip (for now): code-owner reviews, signed commits, linear history. **Merge queue** is the one to add later: if the strict up-to-date rule starts costing you (>~5 concurrent PRs on shared files), merge queue does the up-to-date test automatically and removes the clicks.
