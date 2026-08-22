@@ -13,15 +13,13 @@
 #   - repo admins may bypass the PR gate in "pull_request" mode: they still open a PR but can merge it
 #     without the approval / ci check (emergency hotfix, CI outage). Direct push to main stays blocked.
 #
-# GITOPS EXCEPTION (per-repo variant only, never the default): a repo whose deploy is a CI job that
-# commits back to main (mini-quiz: api-image.yml bumps the Helm image tag, Argo CD deploys from it)
-# needs a DEPLOY KEY as an "always" bypass actor (actor_type DeployKey), with the job pushing over
-# SSH using that key. GITHUB_TOKEN cannot be granted a bypass (the API rejects the Actions
-# integration as an actor), so without this the push is rejected with GH013 and deploys silently
-# stall while the image build stays green. Such a repo is
-# EXCLUDED from org-ruleset-main.json and governed by its ruleset-main-<repo>.json alone — a bypass
-# only works if it is on EVERY ruleset covering the ref, and stacking an org ruleset on top would
-# silently re-block the push.
+#   - write DEPLOY KEYS may bypass everything ("always" mode). This is the GitOps seam: a repo whose
+#     deploy is a CI job that commits back to main (mini-quiz: api-image.yml bumps the Helm image tag
+#     that Argo CD deploys from) pushes over SSH with a write deploy key. GITHUB_TOKEN cannot be granted
+#     a bypass (the API rejects the Actions integration as an actor), so without this the push is
+#     rejected with GH013 and deploys silently stall while the image build stays green. Inert on any
+#     repo with no write deploy key registered, which is why it is safe as the default. A bypass only
+#     works when it is on EVERY ruleset covering the ref, so it is in org-ruleset-main.json too.
 #
 # CHECK NAME: with the reusable-workflow caller, GitHub names the check "ci / ci"
 # (<caller job> / <called job>) — that's what ruleset-main.json requires.
@@ -56,8 +54,7 @@ for repo in "$@"; do
 
   # 2) Branch ruleset (skip when the org-level ruleset already covers this repo)
   if [ "${SKIP_REPO_RULESET:-0}" = "1" ]; then echo "    ruleset: skipped (org ruleset covers it)"; continue; fi
-  # Repos whose required check differs from "ci / ci", or that need an extra bypass
-  # actor (see header), get their own variant file.
+  # Repos whose required check differs from "ci / ci" get their own variant file.
   ruleset="ruleset-main.json"
   [ -f "ruleset-main-$(basename "$repo").json" ] && ruleset="ruleset-main-$(basename "$repo").json"
   # Update in place when the ruleset already exists, so re-running this script converges
