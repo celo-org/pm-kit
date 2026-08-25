@@ -1,0 +1,34 @@
+# A PR that changes plugin content without moving the plugin version ships nothing:
+# `claude plugin update` compares versions, sees no change, and keeps the old files —
+# which is how the head-SHA-gate review-pr.md sat unshipped on main. (#22)
+# This turns that silent no-op into a red check.
+name: plugin-version-guard
+
+on:
+  pull_request:
+    paths: ['claude-plugin/**']
+
+permissions:
+  contents: read
+
+jobs:
+  version-moved:
+    name: plugin content change moves the plugin version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: version must differ from base when claude-plugin/ content changed
+        run: |
+          git fetch --quiet origin "${{ github.base_ref }}"
+          base="origin/${{ github.base_ref }}"
+          old=$(git show "$base":claude-plugin/.claude-plugin/plugin.json | jq -r .version)
+          new=$(jq -r .version claude-plugin/.claude-plugin/plugin.json)
+          changed=$(git diff --name-only "$base"...HEAD -- claude-plugin/ | grep -v '^claude-plugin/.claude-plugin/plugin.json$' || true)
+          if [ -n "$changed" ] && [ "$old" = "$new" ]; then
+            echo "::error::claude-plugin/ content changed but the plugin version stayed $old — claude plugin update will no-op and ship none of this. Bump claude-plugin/.claude-plugin/plugin.json in the same PR. (#22)"
+            echo "$changed"
+            exit 1
+          fi
+          echo "OK: version $old -> $new (content changes: $(echo "$changed" | grep -c . || true))"

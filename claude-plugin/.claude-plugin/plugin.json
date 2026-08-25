@@ -1,6 +1,6 @@
 {
   "name": "pm-kit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Issue / PR / review / post-merge / status / backlog-audit commands that enforce the team engineering playbook.",
   "author": {
     "name": "Lena / Mondeto"
