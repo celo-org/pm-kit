@@ -6,7 +6,7 @@ Repos don't copy this kit; they **point at it**. Change something here, and it r
 |---|---|---|---|
 | CI steps (lint, typecheck, test, build) | `.github/workflows/ci-*.yml` (reusable, `workflow_call`) | 12-line caller `.github/workflows/ci.yml` → `uses: celo-org/pm-kit/...@main` | Instantly — callers run whatever is on `main` here |
 | Issue forms, PR template, shared rules, money-path checklist, renovate.json | `templates/` | `.github/…`, `.claude/shared/…` | `sync-templates.yml` opens a PR in every repo listed in `sync/sync.yml` |
-| Claude commands `/file-issue` `/write-pr` `/review-pr` `/post-merge` `/close-pr` `/weekly-status` `/board-audit` | `claude-plugin/` (plugin marketplace) | installed plugin | `claude plugin update pm-kit` |
+| Claude commands `/file-issue` `/write-pr` `/review-pr` `/post-merge` `/close-pr` `/weekly-status` `/monthly-report` `/board-audit` | `claude-plugin/` (plugin marketplace) | installed plugin | `claude plugin update pm-kit` |
 | Branch protection | `protection/org-ruleset-main.json` — **one org-level ruleset** targeting the 8 repos by name | — | edit the include list, re-run `apply-org-ruleset.sh` |
 | Merge settings (squash-only, title=commit, auto-merge) + labels | `protection/apply-protection.sh`, `create-labels.sh` | per-repo settings via API | re-run (idempotent) |
 | `CLAUDE.md` | `templates/CLAUDE.md.template` (starter only) | **repo-owned** — imports the synced shared rules with `@.claude/shared/engineering-rules.md` | manual; only project-specific content lives there |
@@ -27,7 +27,7 @@ Everything in this kit is repo-level except one thing: the Claude commands are i
    claude plugin marketplace add celo-org/pm-kit
    claude plugin install pm-kit@pm-kit
    ```
-3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit`.
+3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/monthly-report`, `/board-audit`.
 4. Later updates: `claude plugin update pm-kit`.
 
 That's it — CI, templates, shared rules, and branch protection are already wired into the repos and need no per-person configuration.
@@ -44,9 +44,10 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 | `/post-merge <PR>` | Compares what GitHub *actually* closed against what the body said, catches sidebar-link closures, drafts reopens and successor issues | §6 |
 | `/close-pr <PR> <reason>` | Closes without merging while capturing what the work proved, with links pinned to the head SHA | §6 |
 | `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere | §1 |
+| `/monthly-report [YYYY-MM]` | Drafts the monthly report against last month's headings so sections are not silently renamed or dropped, separates merged from deployed, and leads with decisions needed. Prints in chat and writes nowhere | §1 |
 | `/board-audit [repo\|all]` | Sorts an open backlog into buckets (stale, missing metadata, duplicates, sprawling, stale PRs), then closes / relabels / reassigns one **confirmed bucket at a time**. The only command that writes in batch — so deletion is never batched, and anything `priority:critical` stops the run | §1 |
 
-The first five work on one issue or PR; the last two work on the whole board. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
+The first five work on one issue or PR; the last three work on the whole board. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
 
 ## Bootstrap a repo
 
