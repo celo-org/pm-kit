@@ -9,9 +9,9 @@ Pairs with the `pm-kit` folder. Budget: ~1 hour to publish pm-kit as a repo (onc
 
 **Don't copy the kit into eight repos — publish it once as `celo-org/pm-kit` and have repos point at it.** Otherwise you own eight drifting copies. Three mechanisms, each matched to what changes how often:
 
-- **CI logic → reusable workflows.** Each repo has a 12-line `ci.yml` that just says `uses: celo-org/pm-kit/.github/workflows/ci-node.yml@main`. Change the steps in pm-kit; every repo runs the new version on its next PR. Zero per-repo work. (pm-kit can be internal/private only if every caller repo is private/internal too — **public repos cannot call internal/private reusable workflows**, so one public product repo means pm-kit goes public or that repo keeps self-contained CI. Enable Actions access "from repositories in the organization". Optionally tag `v1` and pin callers to it for stability.)
+- **CI logic → reusable workflows.** Each repo has a 12-line `ci.yml` that just says `uses: celo-org/pm-kit/.github/workflows/ci-node.yml@main`, and Vercel-hosted apps have an `e2e-smoke.yml` caller that runs pm-kit's preview smoke on every Preview deployment. Change the steps in pm-kit; every repo runs the new version on its next PR. Zero per-repo work. (pm-kit can be internal/private only if every caller repo is private/internal too — **public repos cannot call internal/private reusable workflows**, so one public product repo means pm-kit goes public or that repo keeps self-contained CI. Enable Actions access "from repositories in the organization". Optionally tag `v1` and pin callers to it for stability.)
 - **Templates and shared rules → sync PRs.** Issue forms, PR template, `engineering-rules.md`, `money-path-checklist.md`, `renovate.json` live under `pm-kit/templates/`. A workflow in pm-kit (`sync-templates.yml`, using `BetaHuhn/repo-file-sync-action`) opens a PR into every repo listed in `sync/sync.yml` whenever those files change on `main`. Auth comes from an org-owned GitHub App (client-ID variable + private-key secret on pm-kit; a short-lived token is minted per run). You review and merge those PRs like any other — which is also your audit trail of rule changes.
-- **Claude commands → plugin marketplace.** `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit` are a Claude Code plugin in pm-kit. Everyone installs once (`claude plugin marketplace add celo-org/pm-kit && claude plugin install pm-kit@pm-kit`) and gets updates with `claude plugin update pm-kit`.
+- **Claude commands → plugin marketplace.** `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit` are a Claude Code plugin in pm-kit. Everyone installs once (`claude plugin marketplace add celo-org/pm-kit && claude plugin install pm-kit@pm-kit`, then `npx playwright install chromium` once for the bundled headless browser) and gets updates with `claude plugin update pm-kit`.
 
 The **only** files a repo owns are its `CLAUDE.md` (project description, commands, architecture, gotchas — it *imports* the shared rules with `@.claude/shared/engineering-rules.md`, so rules aren't restated per repo) and its CI caller's inputs (Node version, monorepo directory, dummy build env). Branch protection and labels are applied by script, idempotently — re-run whenever the ruleset changes.
 
@@ -46,7 +46,7 @@ git checkout -b lena/0-pm-kit-bootstrap   # <handle>/<issue>-<slug>
 bash ~/code/pm-kit/apply.sh
 ```
 
-The script detects the stack (Next.js/Node, Hardhat, Foundry, Python, Mintlify) and package manager, then adds — never overwriting: the thin CI caller `.github/workflows/ci.yml` (→ reusable workflow in pm-kit: lint + typecheck + tests + build, Node pinned from `.nvmrc`), `.github/ISSUE_TEMPLATE/` (bug / user story / task forms), `.github/PULL_REQUEST_TEMPLATE.md`, `.claude/shared/engineering-rules.md` + `money-path-checklist.md`, a `CLAUDE.md` skeleton that imports them, `renovate.json`, and — if the repo has no tests — a Vitest scaffold.
+The script detects the stack (Next.js/Node, Hardhat, Foundry, Python, Mintlify) and package manager, then adds — never overwriting: the thin CI caller `.github/workflows/ci.yml` (→ reusable workflow in pm-kit: lint + typecheck + tests + build, Node pinned from `.nvmrc`), `.github/ISSUE_TEMPLATE/` (bug / user story / task forms), `.github/PULL_REQUEST_TEMPLATE.md`, `.claude/shared/engineering-rules.md` + `money-path-checklist.md`, a `CLAUDE.md` skeleton that imports them, `renovate.json`, and — if the repo has no tests — a Vitest scaffold. For Node apps it also adds the `e2e-smoke.yml` caller (Vercel-hosted apps; delete it otherwise — Step 2b).
 
 **Repo-specific notes:**
 
@@ -87,6 +87,18 @@ gh pr create --fill
 ```
 
 Watch the Actions tab — this first PR is your CI green light.
+
+---
+
+## Step 2b — Preview smoke (~10 min per Vercel-hosted repo)
+
+Every product repo already gets a Vercel Preview deployment per commit. `.github/workflows/e2e-smoke.yml` (added by `apply.sh`) runs on each successful one and calls pm-kit's `ci-e2e-smoke.yml`, which visits the routes you list and fails on HTTP ≥ 400, a framework error overlay, or any console error, uncaught exception, or failed same-origin request — desktop and phone viewport, screenshots in the run artifact. The spec lives once, in `pm-kit/e2e-smoke/`; repos carry only the caller.
+
+1. Edit `routes:` in the caller to the pages a user hits first.
+2. Preview behind Vercel Authentication (mondeto-admin, askbots)? Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation → generate, then store it as repo secret `VERCEL_AUTOMATION_BYPASS_SECRET` from your own terminal. Without it the smoke fails red with "redirected off-origin to the Vercel login" — it never passes green on a login page.
+3. Push a branch: the `e2e-smoke` check appears on the PR once Vercel reports the preview. It is not a required check yet — deploy timing is independent of `ci`; promote it in the ruleset once it has been green for a while.
+
+The check reflects the preview it ran on: a green `e2e-smoke` on a stale deployment counts for nothing (§3). Payment flows are not automated here: for a bigger change on a payment path the reviewer can request one real small-amount transaction from the author as optional evidence, verified at the receipt (§3). No wallet keys go to agents or CI.
 
 ---
 
@@ -143,7 +155,7 @@ Verify in each repo: Settings → Rules → Rulesets → `protect-main` shows Ac
 
 The scaffold gives you a passing smoke test — a floor, not real coverage. Here's the pragmatic path for "proper tests right now" without a two-week testing detour:
 
-**Priority order (per product):** 1) pure logic — money/points calculation, chain interaction helpers, data transforms — highest bug density, cheapest to test; 2) critical user paths as component tests (the one flow that, broken, means the product is down); 3) regression tests for every bug from now on (fix + failing-test-first). Skip for now: E2E browser suites, visual snapshots, coverage targets above ~50%.
+**Priority order (per product):** 1) pure logic — money/points calculation, chain interaction helpers, data transforms — highest bug density, cheapest to test; 2) critical user paths as component tests (the one flow that, broken, means the product is down); 3) regression tests for every bug from now on (fix + failing-test-first). Skip for now: visual snapshots and coverage targets above ~50%. Browser coverage comes from the agent's browser pass in `/write-pr` and `/review-pr` and the preview smoke (Step 2b) — not from a committed E2E suite per page.
 
 **Let Claude Code write the first suite.** In each repo, run `claude` and use this prompt:
 
@@ -157,7 +169,7 @@ Review the tests like you'd review code — delete any that just restate the imp
 
 ## Step 6 — Make the agents actually follow the templates
 
-Four mechanisms, all wired: the **issue forms** render as structured fields, so issues arrive uniform whether typed by a human or filed by an agent; **CLAUDE.md** imports the shared rules so every Claude session (local, Cowork, CI) reads the same playbook, with a ten-rule summary at the top for sessions that skim; the **PR template** auto-fills every PR body; and the **plugin commands** turn the playbook into procedure — `/file-issue` verifies before filing and clusters by fix boundary, `/write-pr` mutation-tests and decides Closes vs Refs from the acceptance boxes, `/review-pr` tiers the review and runs the behaviour pass, `/post-merge` checks what actually closed. Two more work at board level rather than per-ticket: `/weekly-status` drafts the Friday status from merged PRs and closed issues rather than from impressions, and `/board-audit` sorts a backlog of hundreds into buckets and cleans it up bucket by bucket — it is the one command that closes, relabels, and reassigns in batch, which is why it confirms each bucket separately and never deletes as part of one. Every command shows its output and waits for your confirmation before touching GitHub.
+Four mechanisms, all wired: the **issue forms** render as structured fields, so issues arrive uniform whether typed by a human or filed by an agent; **CLAUDE.md** imports the shared rules so every Claude session (local, Cowork, CI) reads the same playbook, with a ten-rule summary at the top for sessions that skim; the **PR template** auto-fills every PR body; and the **plugin commands** turn the playbook into procedure — `/file-issue` verifies before filing and clusters by fix boundary, `/write-pr` mutation-tests, drives the bundled headless browser over any changed UI (desktop + phone, console clean, screenshots) and decides Closes vs Refs from the acceptance boxes, `/review-pr` tiers the review and runs the behaviour pass including its own browser pass on the preview, `/post-merge` checks what actually closed. Two more work at board level rather than per-ticket: `/weekly-status` drafts the Friday status from merged PRs and closed issues rather than from impressions, and `/board-audit` sorts a backlog of hundreds into buckets and cleans it up bucket by bucket — it is the one command that closes, relabels, and reassigns in batch, which is why it confirms each bucket separately and never deletes as part of one. Every command shows its output and waits for your confirmation before touching GitHub.
 
 Two habits to add on the human side: when the research person generates stories with Claude, end the prompt with *"file each story as a GitHub issue following .github/ISSUE_TEMPLATE/user_story.yml, in the celo-org/<repo> repo"* — the acceptance-criteria field is what makes stories executable by builders and agents alike. The label set is created by `protection/create-labels.sh` (Step 4) so agents never invent labels.
 

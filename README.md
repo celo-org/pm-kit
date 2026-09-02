@@ -5,6 +5,7 @@ Repos don't copy this kit; they **point at it**. Change something here, and it r
 | What | Lives in pm-kit | In each repo | How updates propagate |
 |---|---|---|---|
 | CI steps (lint, typecheck, test, build) | `.github/workflows/ci-*.yml` (reusable, `workflow_call`) | 12-line caller `.github/workflows/ci.yml` → `uses: celo-org/pm-kit/...@main` | Instantly — callers run whatever is on `main` here |
+| Preview smoke (Vercel-hosted apps) | `.github/workflows/ci-e2e-smoke.yml` + `e2e-smoke/` (the smoke spec, once) | caller `.github/workflows/e2e-smoke.yml` on each Preview deployment | Instantly — callers run whatever is on `main` here |
 | Issue forms, PR template, shared rules, money-path checklist, renovate.json | `templates/` | `.github/…`, `.claude/shared/…` | `sync-templates.yml` opens a PR in every repo listed in `sync/sync.yml` |
 | Claude commands `/file-issue` `/write-pr` `/review-pr` `/post-merge` `/close-pr` `/weekly-status` `/board-audit` | `claude-plugin/` (plugin marketplace) | installed plugin | `claude plugin update pm-kit` |
 | Branch protection | `protection/org-ruleset-main.json` — **one org-level ruleset** targeting the 8 repos by name | — | edit the include list, re-run `apply-org-ruleset.sh` |
@@ -27,8 +28,12 @@ Everything in this kit is repo-level except one thing: the Claude commands are i
    claude plugin marketplace add celo-org/pm-kit
    claude plugin install pm-kit@pm-kit
    ```
-3. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit`.
-4. Later updates: `claude plugin update pm-kit`.
+3. Download the headless browser once (the plugin bundles a Playwright MCP server that `/write-pr` and `/review-pr` use to click through changed UI; works on macOS, Linux, Windows):
+   ```bash
+   npx playwright install chromium
+   ```
+4. Verify: run `claude` in any repo and type `/` — you should see `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`, `/weekly-status`, `/board-audit`; `/mcp` lists `playwright` as connected.
+5. Later updates: `claude plugin update pm-kit`.
 
 That's it — CI, templates, shared rules, and branch protection are already wired into the repos and need no per-person configuration.
 
@@ -39,8 +44,8 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 | Command | What it does | Rules |
 |---|---|---|
 | `/file-issue <description>` | Verifies the claim by running it, clusters by fix boundary (same-diff / different-schedule tests), drafts title + body + labels against the issue form | §1 |
-| `/write-pr [issue]` | Fills the PR template from the branch: what it does and what it does *not* do, mutation count, `Closes` vs `Refs` decided from the acceptance boxes | §2–3 |
-| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, attempts to refute every claim in the body. No approve-with-nits | §4 |
+| `/write-pr [issue]` | Fills the PR template from the branch: what it does and what it does *not* do, mutation count, `Closes` vs `Refs` decided from the acceptance boxes. UI touched → drives the headless browser over the changed surface (desktop + phone), fixes until the console is clean, attaches screenshots as evidence | §2–3 |
+| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. No approve-with-nits | §4 |
 | `/post-merge <PR>` | Compares what GitHub *actually* closed against what the body said, catches sidebar-link closures, drafts reopens and successor issues | §6 |
 | `/close-pr <PR> <reason>` | Closes without merging while capturing what the work proved, with links pinned to the head SHA | §6 |
 | `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere | §1 |
@@ -64,8 +69,9 @@ And the plugin: `claude plugin marketplace add celo-org/pm-kit && claude plugin 
 
 ## Files
 
-- `.github/workflows/` — reusable CI (`ci-node`, `ci-hardhat`, `ci-foundry`, `ci-python`, `ci-docs-mintlify`), `verify-release-version`, `sync-templates`
-- `callers/` — thin per-repo workflows
+- `.github/workflows/` — reusable CI (`ci-node`, `ci-hardhat`, `ci-foundry`, `ci-python`, `ci-docs-mintlify`), `ci-e2e-smoke` (preview smoke), `verify-release-version`, `sync-templates`
+- `callers/` — thin per-repo workflows (`ci-*`, `e2e-smoke` on `deployment_status`, `issue-priority-label`)
+- `e2e-smoke/` — the preview smoke spec, kept once here and checked out by `ci-e2e-smoke` (see its header for what green means)
 - `templates/` — everything synced into repos, plus `CLAUDE.md.template`
 - `templates/.claude/shared/engineering-rules.md` — the merged playbook (issues, PRs, tests, reviews, merging, closing, contradictions log)
 - `templates/.claude/shared/money-path-checklist.md` — 18 recurring defects for money/security diffs
