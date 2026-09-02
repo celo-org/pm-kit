@@ -1,0 +1,106 @@
+# Reusable preview smoke for Vercel-hosted repos.
+# Called from each repo via callers/e2e-smoke.yml on `deployment_status` — update HERE, every repo picks it up.
+#
+# What green means — and does not:
+#   every listed route on the preview returned < 400, rendered visible text, showed no framework error
+#   overlay, and produced zero console errors / uncaught exceptions / failed same-origin requests —
+#   desktop and phone viewport. Nothing about correctness, layout, or money.
+#
+# Lessons encoded:
+#  - the smoke spec lives once, in pm-kit (checked out below) — repos don't carry a copy that drifts
+#  - a preview behind Vercel Authentication 302s a bot to the Vercel login; the bypass secret goes in a
+#    header, and a missing secret fails red on the off-origin redirect, never green on a login page
+#  - the check reflects the preview it ran on: a green run on a stale deployment counts for nothing
+name: ci-e2e-smoke (reusable)
+
+on:
+  # Manual trigger from pm-kit itself: `gh workflow run ci-e2e-smoke.yml --ref <branch> -f url=<preview>`.
+  # This is how a change to the smoke is proven green and red before it reaches the callers.
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Preview URL to smoke
+        required: true
+        type: string
+      routes:
+        description: Comma-separated routes
+        type: string
+        default: '/'
+      ignore-console:
+        description: Regex for known console noise to ignore
+        type: string
+        default: ''
+      node-version:
+        type: string
+        default: '24'
+  workflow_call:
+    inputs:
+      url:
+        description: Preview URL Vercel reported for this commit
+        required: true
+        type: string
+      routes:
+        description: Comma-separated routes a user hits first
+        type: string
+        default: '/'
+      ignore-console:
+        description: Regex for known console noise to ignore (wallet-provider warnings, etc.)
+        type: string
+        default: ''
+      node-version:
+        description: Node version used to run the smoke (not the app's — the app is already deployed)
+        type: string
+        default: '24'
+    secrets:
+      VERCEL_AUTOMATION_BYPASS_SECRET:
+        description: Protection Bypass for Automation, for previews behind Vercel Authentication
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-smoke:
+    name: e2e-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the smoke spec from pm-kit
+        uses: actions/checkout@v4
+        with:
+          repository: celo-org/pm-kit
+          ref: main
+          path: pm-kit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: pm-kit/e2e-smoke/package-lock.json
+
+      - name: Install
+        working-directory: pm-kit/e2e-smoke
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: pm-kit/e2e-smoke
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke the preview
+        working-directory: pm-kit/e2e-smoke
+        env:
+          CI: 'true'
+          SMOKE_URL: ${{ inputs.url }}
+          SMOKE_ROUTES: ${{ inputs.routes }}
+          SMOKE_IGNORE_CONSOLE: ${{ inputs.ignore-console }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          echo "preview: $SMOKE_URL  routes: $SMOKE_ROUTES  bypass: $([ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ] && echo present || echo none)"
+          npx playwright test
+
+      - name: Upload report (screenshots per route)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-smoke-report
+          path: pm-kit/e2e-smoke/playwright-report
+          retention-days: 14

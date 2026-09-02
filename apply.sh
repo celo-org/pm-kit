@@ -46,6 +46,16 @@ else echo "  skipped (unknown stack) — pick a caller from $KIT/callers/"; fi
 # ---- Issue-priority labeler (repo-owned, like the CI caller) ----
 copy_if_absent "$KIT/callers/issue-priority-label.yml" ".github/workflows/issue-priority-label.yml"
 
+# ---- Preview smoke caller (Vercel-hosted Node apps; runs on each Preview deployment) ----
+if [ "$stack" = "node" ]; then
+  if [ -e .github/workflows/e2e-smoke.yml ]; then echo "  skip (exists): .github/workflows/e2e-smoke.yml"
+  else
+    mkdir -p .github/workflows
+    sed "s#celo-org/pm-kit#$OWNER/pm-kit#g" "$KIT/callers/e2e-smoke.yml" > .github/workflows/e2e-smoke.yml
+    echo "  added: .github/workflows/e2e-smoke.yml (Vercel-hosted apps only — delete otherwise; edit routes:)"
+  fi
+fi
+
 # ---- Templates + shared rules (kept in sync afterwards by pm-kit's sync workflow) ----
 echo "Templates & shared rules:"
 for f in "$KIT"/templates/.github/ISSUE_TEMPLATE/*.yml; do copy_if_absent "$f" ".github/ISSUE_TEMPLATE/$(basename "$f")"; done

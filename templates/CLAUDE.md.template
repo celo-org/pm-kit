@@ -28,7 +28,7 @@ Before a real-money / real-send path goes public, it runs in production behind t
 The ten you must never violate, even without reading the above:
 1. Never push to `main`. Branch `<handle>/<issue>-<slug>` → PR → squash. Title = the commit on `main` (Conventional Commits, scoped, outcome).
 2. One concern per PR, one fix-unit per issue, one priority per issue.
-3. Every change ships the test that fails on pre-fix code, through the seam it touches (route/CLI/component), and any prose guarantee is tested on its failure path. State the mutation count in the PR.
+3. Every change ships the test that fails on pre-fix code, through the seam it touches (route/CLI/component), and any prose guarantee is tested on its failure path. State the mutation count in the PR. A UI change ships browser-pass evidence (routes, console errors = 0, screenshots on desktop + phone).
 4. `Closes #N` only if every acceptance box is met; otherwise `Refs #N`. After merge, check what actually closed.
 5. Every claim in an issue/PR/review is evidence-backed: commands + output, `file:line`. "Confirmed" means you ran it. Measured over reasoned — thresholds and constants pinned in a test, not a comment.
 6. Say what the PR does NOT do (with numbers). Say what it actually does, even beyond the ticket. Flag judgement calls and bundled product changes for the maintainer.

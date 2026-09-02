@@ -10,7 +10,7 @@
     {
       "name": "pm-kit",
       "source": "./claude-plugin",
-      "description": "Commands: /file-issue, /write-pr, /review-pr, /post-merge, /close-pr, /weekly-status, /board-audit \u2014 each enforces the team playbook (evidence over assertion, Closes vs Refs, tiered review, reproduce-then-fix, verify what closed, status from evidence, backlog audited in buckets)."
+      "description": "Commands: /file-issue, /write-pr, /review-pr, /post-merge, /close-pr, /weekly-status, /board-audit \u2014 each enforces the team playbook (evidence over assertion, Closes vs Refs, tiered review, reproduce-then-fix, verify what closed, status from evidence, backlog audited in buckets). Bundles a headless Playwright MCP server: /write-pr and /review-pr click through changed UI on desktop and phone viewports and attach screenshots as evidence."
     }
   ]
 }
