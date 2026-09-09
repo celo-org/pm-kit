@@ -1,0 +1,14 @@
+{
+  "name": "pm-kit-e2e-smoke",
+  "private": true,
+  "description": "Preview smoke run by .github/workflows/ci-e2e-smoke.yml against a Vercel preview URL. Lives once, here; product repos do not carry a copy.",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "^24",
+    "typescript": "^5"
+  }
+}

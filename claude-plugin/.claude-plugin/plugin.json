@@ -1,7 +1,7 @@
 {
   "name": "pm-kit",
-  "version": "1.2.1",
-  "description": "Issue / PR / review / post-merge / status / backlog-audit commands that enforce the team engineering playbook.",
+  "version": "1.3.0",
+  "description": "Issue / PR / review / post-merge / status / backlog-audit commands that enforce the team engineering playbook. Ships a headless Playwright MCP server so /write-pr and /review-pr drive the browser over changed UI.",
   "author": {
     "name": "Lena / Mondeto"
   }

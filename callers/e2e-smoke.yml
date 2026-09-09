@@ -1,0 +1,27 @@
+# Preview smoke. Runs when Vercel reports a successful Preview deployment for a commit and calls the
+# reusable workflow in pm-kit. Repo-owned like ci.yml: the inputs below are yours, the steps are pm-kit's.
+#
+# - `deployment_status` runs the workflow file from the deployment's commit, so this file has to be on
+#   the branch: branches cut after it lands on main carry it; older branches rebase.
+# - Two Vercel projects on one repo (mini-quiz + mini-quiz-admin)? Add a second job keyed on the
+#   environment name, e.g. `contains(github.event.deployment.environment, 'admin')`, with its own routes.
+# - Preview behind Vercel Authentication? Vercel → Project → Settings → Deployment Protection →
+#   Protection Bypass for Automation, stored as repo secret VERCEL_AUTOMATION_BYPASS_SECRET. Without it
+#   the smoke fails red with "redirected off-origin to the Vercel login" — it never passes green on a login page.
+# - Not a required check yet: deploy timing is independent of `ci`. Promote it in the ruleset once it has
+#   been green for a while.
+name: e2e-smoke
+
+on:
+  deployment_status:
+
+jobs:
+  preview:
+    if: github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Preview')
+    uses: celo-org/pm-kit/.github/workflows/ci-e2e-smoke.yml@main
+    with:
+      url: ${{ github.event.deployment_status.environment_url }}
+      routes: "/"          # the routes a user hits first, comma-separated
+      # ignore-console: "wallet provider warning"   # regex for known console noise
+    secrets:
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
