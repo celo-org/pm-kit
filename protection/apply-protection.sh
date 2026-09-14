@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Apply the main-branch protection ruleset + merge settings to one or more repos.
+# Apply the main-branch protection ruleset + merge settings + Dependabot security settings
+# to one or more repos.
 # Since all repos are in celo-org, prefer apply-org-ruleset.sh for the ruleset (one call, all repos)
 # and use THIS script for the per-repo merge settings (those have no org-level equivalent).
 # Usage: ./apply-protection.sh owner/repo [owner/repo ...]
@@ -20,6 +21,12 @@
 #     rejected with GH013 and deploys silently stall while the image build stays green. Inert on any
 #     repo with no write deploy key registered, which is why it is safe as the default. A bypass only
 #     works when it is on EVERY ruleset covering the ref, so it is in org-ruleset-main.json too.
+#
+# What the Dependabot step enforces:
+#   - vulnerability-alerts: the repo is scanned and alerts are raised at all
+#   - automated-security-fixes: an advisory with a patched version in range arrives as a PR,
+#     not only as an alert nobody actions. Note the limit — an advisory whose only fix is a
+#     major upgrade still produces no PR, which is why Renovate coverage matters separately.
 #
 # CHECK NAME: with the reusable-workflow caller, GitHub names the check "ci / ci"
 # (<caller job> / <called job>) — that's what ruleset-main.json requires.
@@ -52,7 +59,24 @@ for repo in "$@"; do
     && echo "    merge settings: squash-only, title=PR title, body=PR body, auto-delete branches" \
     || echo "    WARN: could not update merge settings (need admin)"
 
-  # 2) Branch ruleset (skip when the org-level ruleset already covers this repo)
+  # 2) Dependabot alerts + security update PRs.
+  #    (Lesson: all nine repos had automated-security-fixes disabled, so a critical
+  #     unauthenticated RCE in next produced an alert email and zero pull requests — #28.
+  #     A disabled Dependabot emits no signal at all: no failed run, no red check, nothing
+  #     in a PR. It is indistinguishable from a repo with no vulnerabilities, which is why
+  #     this has to be converged rather than checked.)
+  #
+  #    MUST stay ABOVE the SKIP_REPO_RULESET continue below. Most of our repos are covered
+  #    by the org-level ruleset and are applied with SKIP_REPO_RULESET=1, so a security step
+  #    placed after that early exit would silently skip exactly the repos it is for.
+  gh api "repos/$repo/vulnerability-alerts" --method PUT --silent \
+    && echo "    dependabot alerts: enabled" \
+    || echo "    WARN: could not enable Dependabot alerts (need admin)"
+  gh api "repos/$repo/automated-security-fixes" --method PUT --silent \
+    && echo "    dependabot security updates: enabled (advisory fixes arrive as PRs)" \
+    || echo "    WARN: could not enable Dependabot security updates (need admin)"
+
+  # 3) Branch ruleset (skip when the org-level ruleset already covers this repo)
   if [ "${SKIP_REPO_RULESET:-0}" = "1" ]; then echo "    ruleset: skipped (org ruleset covers it)"; continue; fi
   # Repos whose required check differs from "ci / ci" get their own variant file.
   ruleset="ruleset-main.json"

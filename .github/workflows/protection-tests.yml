@@ -1,0 +1,26 @@
+# The scripts in protection/ converge settings that emit no signal when they are wrong.
+# A branch ruleset that never got applied, or a Dependabot setting that never got enabled,
+# looks exactly like a repo that is fine — no failed run, no red check, nothing in a PR (#28).
+# So the scripts get a test, and the test gets a check.
+name: protection-tests
+
+on:
+  pull_request:
+    paths: ['protection/**']
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    name: protection scripts behave
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck
+        run: shellcheck protection/*.sh
+
+      - name: apply-protection.sh
+        # `gh` is stubbed inside the test; nothing here talks to the API.
+        run: ./protection/apply-protection.test.sh
