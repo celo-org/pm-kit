@@ -121,6 +121,8 @@ The check reflects the preview it ran on: a green `e2e-smoke` on a stale deploym
 
 Plus, in repo settings (the script does this): **squash merge only**, merge commits and rebase merges disabled, **PR title becomes the commit message**, PR body becomes the commit body, auto-merge enabled, delete branch on merge. That turns your squash convention from discipline into platform behaviour.
 
+**Dependabot alerts and security updates (the script does this too).** Not branch protection, but the same lesson, and it is here because it was learned the hard way: all nine repos had *security updates* disabled, so a critical unauthenticated RCE in `next` produced an alert email and **zero pull requests** (#28). A disabled Dependabot emits no signal at all — no failed run, no red check, nothing in a PR. It is indistinguishable from a repo with no vulnerabilities, which is why it has to be converged by script rather than checked by eye. Know the limit: security updates only open a PR when the advisory has a patched version *inside the declared range*. An advisory whose only fix is a major upgrade still produces nothing, which is why Renovate coverage is a separate thing to get right.
+
 Skip (for now): code-owner reviews, signed commits, linear history. **Merge queue** is the one to add later: if the strict up-to-date rule starts costing you (>~5 concurrent PRs on shared files), merge queue does the up-to-date test automatically and removes the clicks.
 
 **Plan check:** rulesets are enforced on private repos only on GitHub Team/Enterprise. celo-org is an organisation with ~300 repos and an org-level `.github`, so this is almost certainly covered — but verify once in Settings → Rules of any private repo (an unenforced ruleset shows an "upgrade" banner).
@@ -134,9 +136,21 @@ cd ~/code/pm-kit/protection
 ./create-labels.sh     celo-org/mondeto celo-org/mondeto-admin celo-org/saluto celo-org/mini-quiz celo-org/x402-facilitator celo-org/askbots celo-org/celo-composer celo-org/docs
 ./apply-org-ruleset.sh celo-org        # ONE org ruleset, targets the 8 repos by name (needs org admin)
 ./apply-protection.sh  celo-org/mondeto celo-org/mondeto-admin celo-org/saluto celo-org/mini-quiz celo-org/x402-facilitator celo-org/askbots celo-org/celo-composer celo-org/docs
-#   ^ still needed for per-repo merge settings (squash-only, title=commit, auto-merge).
+#   ^ still needed for per-repo merge settings (squash-only, title=commit, auto-merge) and for
+#     Dependabot alerts + security updates, neither of which has an org-level equivalent.
 #     It also adds a per-repo ruleset; with the org ruleset in place that's redundant but harmless
-#     (rules combine; the stricter wins). Set SKIP_REPO_RULESET=1 to apply only the merge settings.
+#     (rules combine; the stricter wins). Set SKIP_REPO_RULESET=1 to apply only the merge and
+#     security settings.
+```
+
+Re-run `apply-protection.sh` whenever a repo joins the roster — it is idempotent, and the
+security settings are the part that will otherwise be missed, because nothing goes red when
+they are absent. Verify with:
+
+```bash
+for r in mondeto mondeto-admin saluto mini-quiz x402-facilitator askbots celo-composer celopedia-skills; do
+  printf "%-20s " "$r"; gh api "/repos/celo-org/$r/automated-security-fixes" --jq .enabled
+done
 ```
 
 If you don't have org admin for celo-org: `apply-protection.sh` alone does everything per repo — same protection, eight rulesets instead of one. Ask whoever administers celo-org for the org ruleset later; the JSON is ready to hand over.
