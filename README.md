@@ -48,7 +48,7 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 | `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. No approve-with-nits | §4 |
 | `/post-merge <PR>` | Compares what GitHub *actually* closed against what the body said, catches sidebar-link closures, drafts reopens and successor issues | §6 |
 | `/close-pr <PR> <reason>` | Closes without merging while capturing what the work proved, with links pinned to the head SHA | §6 |
-| `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere | §1 |
+| `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere. Every run checks what serves users against the default branch (Vercel/Pages deployments, deploy workflows, npm) and turns anything behind into a decision with a proposed release command, run only on confirmation | §1 |
 | `/board-audit [repo\|all]` | Sorts an open backlog into buckets (stale, missing metadata, duplicates, sprawling, stale PRs), then closes / relabels / reassigns one **confirmed bucket at a time**. The only command that writes in batch — so deletion is never batched, and anything `priority:critical` stops the run | §1 |
 
 The first five work on one issue or PR; the last two work on the whole board. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
