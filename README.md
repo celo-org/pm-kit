@@ -45,7 +45,7 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 |---|---|---|
 | `/file-issue <description>` | Verifies the claim by running it, clusters by fix boundary (same-diff / different-schedule tests), drafts title + body + labels against the issue form | §1 |
 | `/write-pr [issue]` | Fills the PR template from the branch: what it does and what it does *not* do, mutation count, `Closes` vs `Refs` decided from the acceptance boxes. UI touched → drives the headless browser over the changed surface (desktop + phone), fixes until the console is clean, attaches screenshots as evidence | §2–3 |
-| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. No approve-with-nits | §4 |
+| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. Logic-tier PRs get a pass per lane (money, untrusted input, concurrency, infra/deploy, test power, docs), backend findings reproduced with `curl` or a stubbed cloud CLI, the suite run on the merge with `main`, and deploy-state claims checked at the deployment. No approve-with-nits | §4 |
 | `/post-merge <PR>` | Compares what GitHub *actually* closed against what the body said, catches sidebar-link closures, drafts reopens and successor issues | §6 |
 | `/close-pr <PR> <reason>` | Closes without merging while capturing what the work proved, with links pinned to the head SHA | §6 |
 | `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere | §1 |
@@ -74,7 +74,7 @@ And the plugin: `claude plugin marketplace add celo-org/pm-kit && claude plugin 
 - `e2e-smoke/` — the preview smoke spec, kept once here and checked out by `ci-e2e-smoke` (see its header for what green means)
 - `templates/` — everything synced into repos, plus `CLAUDE.md.template`
 - `templates/.claude/shared/engineering-rules.md` — the merged playbook (issues, PRs, tests, reviews, merging, closing, contradictions log)
-- `templates/.claude/shared/money-path-checklist.md` — 18 recurring defects for money/security diffs
+- `templates/.claude/shared/money-path-checklist.md` — 23 recurring defects for money/security diffs
 - `templates/.claude/shared/tester-mode-pattern.md` — run real-money paths in production behind a restricted audience; porting checklist
 - `claude-plugin/` — commands; `.claude-plugin/marketplace.json` — marketplace manifest
 - `protection/` — `org-ruleset-main.json` + `apply-org-ruleset.sh` (one org ruleset), `ruleset-main.json` + `apply-protection.sh` (per-repo fallback + merge settings), `create-labels.sh`
