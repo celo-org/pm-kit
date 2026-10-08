@@ -207,7 +207,7 @@ The rules also encode the agent-era practices: the feedback-resolution protocol 
 
 **Tester mode** — born from our first real-money payout, which surfaced three bugs no offline test could reach — is a generic shared pattern: two DB flags, server-side gating at every surface, downstream flag-blind, verify at the source of truth, with a porting checklist for the other products. The money-path checklist asks "has it run in anger?" before any real-money path goes public.
 
-The 18-item **money-path checklist** (payout parity, fee omission, self-referential verification, and the rest) is its own synced file, referenced from the PR template and `/review-pr`.
+The 23-item **money-path checklist** (payout parity, fee omission, self-referential verification, and the rest) is its own synced file, referenced from the PR template and `/review-pr`.
 
 Two lessons became CI code rather than prose: Node is pinned from `.nvmrc` (a floating runner version once turned main red with no commit behind it), and typecheck uses `npx --no-install tsc` (npm's placeholder package named `tsc` once certified 21 syntax errors as a passing "TypeScript check").
 
