@@ -195,8 +195,8 @@ The team's accumulated playbooks are merged into **`templates/.claude/shared/eng
 
 - **Branch names**: `<handle>/<issue>-<slug>` — the type prefix is dropped because it already lives in the Conventional-Commit title; the handle answers "whose is this", the issue number links branch → ticket.
 - **"Squash to logical commits with trailers"** vs one-commit squash-merge: the PR *body* is the commit message on `main` (repo setting), so rationale/verification/limits/trailers live there — same content, the place the platform preserves.
-- **Issue granularity**: not a real conflict once you separate the two tests — *same-diff* (merge tickets the same diff would close) and *different-schedule* (split items that would be prioritised differently). Both are in the rules and in `/file-issue`.
-- **Required thread resolution** vs **approve-with-nits**: dropped both — no ruleset click-blocking, and no approving over open nits. Every finding is fixed on the PR or lands in a filed issue before approval.
+- **Issue granularity**: not a real conflict once you separate the two tests — *same-diff* (merge tickets the same diff would close) and *different-schedule* (split items that would be prioritised differently). Both are in the rules and in `/file-issue`. Below `priority:high`, nits do not get a ticket each: they go onto one rolling `Small fixes` issue per repo (label `bundle`) and ship together as one PR at about ten lines or monthly.
+- **Required thread resolution** vs **approve-with-nits**: dropped both — no ruleset click-blocking, and no approving over open nits. Every finding is fixed on the PR, agreed as a won't-do, or filed (minor ones on the `Small fixes` issue) before approval.
 - **Strict up-to-date** vs **parallelism tax**: kept strict — stale-head merges have broken production; the tax is a click. Merge queue is the escape hatch when the queue gets deep.
 - **Squash-only** vs **stacked PRs**: kept squash; stacks ≤ 2 deep, second-lander rebases `--onto main`.
 - **P0/P1/P2** vs **`priority:*`**: `priority:critical|high|medium|low`, with critical defined.

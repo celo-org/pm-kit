@@ -24,7 +24,8 @@ Per repo on the board:
 gh pr list --state merged --search "merged:>=<since>" --json number,title,mergedAt,url,labels
 gh issue list --state closed --search "closed:>=<since>" --json number,title,url
 gh issue list --state open --label "priority:critical" --json number,title,url,updatedAt
-gh pr list --state open --json number,title,isDraft,reviewDecision,updatedAt,url
+gh pr list --state open --json number,title,isDraft,reviewDecision,createdAt,updatedAt,author,reviewRequests,statusCheckRollup,url
+gh issue list --state open --label bundle --json number,title,body,createdAt,url
 ```
 Plus, if the repo is on the project board, items whose Status is blocked/in-review, and anything with a Target date inside the next two weeks.
 
@@ -34,6 +35,8 @@ Plus, if the repo is on the project board, items whose Status is blocked/in-revi
 - **Blocked** = named blocker + since when + who can unblock. "In progress for 9 days with no commits" counts as blocked; say so.
 - **Decisions needed** = the question, the options, and who owns it. This is the most valuable section — lead with it if it's non-empty.
 - **Risks to dates** = only where a target date exists and the evidence says it's at risk (open critical, stalled PR, unstarted work inside the window). Name the date.
+- **Ready but not merged** = every open, non-draft PR older than 5 days (age from `createdAt`; say it is age since opening, not since it became ready). For each, name who it is waiting on, derived from the evidence rather than guessed: `REVIEW_REQUIRED` → the requested reviewers (or "no reviewer requested", which is itself the blocker); `CHANGES_REQUESTED` → the author; `APPROVED` with green checks → whoever merges, usually the author (rules §6, "The author owns getting it merged"). Anything ready for more than a week is also a **Blocked** line.
+- **Small fixes** = per repo, the open `bundle` issue's count of unchecked lines and its age. Flag it as due when it has about ten lines or is older than a month (rules §1).
 - No adjectives, no "good progress". Numbers and issue links. If a week was quiet, the status says so in one line rather than padding.
 
 ## 3. Format
@@ -44,11 +47,15 @@ Plus, if the repo is on the project board, items whose Status is blocked/in-revi
 **Decisions needed**
 - <question> — options A/B — owner: <name> (#N)
 
+**Ready but not merged**
+- #N <title> — <age> days — waiting on <who>   ← omit the section if none
+
 ### <product>
 Shipped: <one line, links>
 In progress: <one line>
 Blocked: <what, since when, who unblocks>
 Risk: <date at risk + why>   ← omit the line entirely if none
+Small fixes: <n> open lines, <age> (#N) — due   ← only when due
 ```
 Repeat per product; omit any product with nothing to report except a single "no changes" line. End with one line: total merged PRs, total issues closed, open criticals.
 
