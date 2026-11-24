@@ -6,7 +6,7 @@
 #   - CI steps: the caller points at celo-org/pm-kit@main — edit pm-kit, every repo picks it up
 #   - Templates + shared rules: pm-kit's sync workflow opens PRs into each repo
 #   - Commands: `claude plugin update pm-kit`
-# The only repo-owned files are CLAUDE.md and the thin CI caller (with its inputs).
+# The only repo-owned files are CLAUDE.md, .claude/verify.md, and the thin CI caller (with its inputs).
 # Never overwrites existing files.
 
 set -euo pipefail
@@ -68,15 +68,24 @@ if [ ! -f renovate.json ] && [ ! -f .github/renovate.json ]; then copy_if_absent
 # ---- CLAUDE.md (repo-owned) ----
 echo "CLAUDE.md:"
 if [ -f CLAUDE.md ]; then
-  echo "  skip (exists): CLAUDE.md — add these two lines to it so shared rules load:"
+  echo "  skip (exists): CLAUDE.md — add these lines to it so shared rules and the verify guide load:"
   echo "      @.claude/shared/engineering-rules.md"
   echo "      @.claude/shared/money-path-checklist.md"
+  echo "      @.claude/verify.md"
 else
   name=$(basename "$(pwd)")
   if [ -f package.json ] && command -v jq >/dev/null; then n=$(jq -r '.name // empty' package.json 2>/dev/null || true); [ -n "$n" ] && name="$n"; fi
   # `|` delimiter: scoped package names (@scope/name) contain `/`
   sed -e "s|{{PROJECT_NAME}}|$name|g" -e "s|{{PM}}|$pm|g" "$KIT/templates/CLAUDE.md.template" > CLAUDE.md
   echo "  added: CLAUDE.md — fill in the {{...}} placeholders (or ask Claude Code to)"
+fi
+
+# ---- .claude/verify.md (repo-owned): how an agent proves a change works by using the app ----
+if [ -f .claude/verify.md ]; then echo "  skip (exists): .claude/verify.md"
+else
+  mkdir -p .claude
+  sed -e "s|{{PROJECT_NAME}}|${name:-$(basename "$(pwd)")}|g" -e "s|{{PM}}|$pm|g" "$KIT/templates/.claude/verify.md.template" > .claude/verify.md
+  echo "  added: .claude/verify.md — fill in how to run and check the key flows (or ask Claude Code to draft it from the code)"
 fi
 
 # ---- Vitest scaffold for JS/TS repos without tests ----

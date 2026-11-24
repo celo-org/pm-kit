@@ -1,0 +1,29 @@
+# How to verify a change in {{PROJECT_NAME}}
+
+> Repo-owned and not synced. This is the page an agent or a new teammate reads to prove a change works by *using* the app, not just by running tests. `/start-issue`, `/write-pr` and `/review-pr` all read it. Keep it short and runnable. **Whenever you needed a step that isn't here, add it in the same PR.**
+
+## Run it locally
+
+- Install and start: `{{PM}} install && {{PM}} run dev` → {{URL, e.g. http://localhost:3000}}
+- Env: copy `.env.example` to `.env.local`. {{Which values are needed to boot, and where a teammate gets them. Never paste values here.}}
+- Data: {{seed script / fixtures / "none needed"}}
+
+## Get to a useful state
+
+{{How to sign in or connect a wallet locally, test accounts or roles, feature flags or tester mode, and how to get test funds (testnet faucet, a mock). Say what can't be done locally and what to use instead (a Vercel preview, a stub).}}
+
+## Key flows, and how to check each
+
+One line per flow: where it starts, what to do, and what "working" looks like.
+
+| Flow | Start at | Do | Expect |
+|---|---|---|---|
+| {{e.g. Pay for an item}} | {{/shop}} | {{pick an item, pay with test USDC}} | {{success toast; receipt shows amount; 0 console errors}} |
+
+## Backend / CLI checks
+
+{{Routes to curl, with an accepted and a rejected example; CLIs to run with a dry run; how to stub a cloud CLI.}}
+
+## Known traps
+
+{{Things that make a check look green when it isn't. For example: "the preview is behind Vercel auth, so use the bypass header", "the dev server caches the price feed for 60s", "MiniPay-only behaviour can't be seen in desktop Chrome".}}

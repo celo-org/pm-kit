@@ -25,6 +25,8 @@ The two rules that hold everything else together:
 
 **Anatomy of a good issue:** what happens (exact commands + real output, or user steps + observed) → root cause (`file:line`) → impact (who hits this doing what; for security/money, what the attacker gets — "quota theft, a DoS lever against settlement, lands in rotated container logs" is the sentence that gets an issue prioritised) → suggested fix → version/commit tested. Use the issue forms in `.github/ISSUE_TEMPLATE/`.
 
+**Write the ticket you would want to be handed.** An agent, or a teammate in their first month, builds exactly what the ticket says and guesses the rest. A ticket is ready when it has three parts. **Task:** what is true afterwards. **Context:** the files (`file:line`), helpers to reuse, related issues and PRs, docs and designs, and constraints (stack, what must not change). **Verification scenarios:** checks someone could run or click, edge cases included, which become the tests. "Fix the login" is not a ticket. "Sign-in with an expired session redirects to `/login` and keeps the return URL (`middleware.ts:41`); scenarios: expired, missing, tampered cookie; phone viewport" is. The engineering is front-loaded into the ticket, which is cheaper than finding it in review.
+
 **State non-goals, dependencies, and what is explicitly not a blocker.** A single sentence "Explicitly not a blocker" keeps an issue out of sprint discussions. Name who owns a shared file; put "Depends on #N" in the body so ordering survives without memory.
 
 **Acceptance criteria as checkboxes; separate code work from ops work.** List "rotate the credential / recreate the container / purge captures" as their own boxes, so a code PR can close its half while the ops half stays tracked ("this stops the repo adding to the exposure; rotation actually closes it").
@@ -80,6 +82,21 @@ The two rules that hold everything else together:
 ---
 
 ## 3. Tests & verification
+
+**Work an issue in this order, every time** (`/start-issue` walks it):
+1. Close the spec's gaps: ask about edge cases and hidden assumptions *before* writing code.
+2. Prove the before-state: reproduce the bug, or record the current behaviour.
+3. Trace the root cause to `file:line`, not to where it surfaced.
+4. Write the test and watch it fail for the right reason.
+5. Make it pass with the smallest diff.
+6. Simplify your own diff.
+7. Verify every scenario by using the app (`.claude/verify.md`).
+
+Skipping step 2 is how a fix ends up passing for a bug nobody ever saw. Skipping step 4 is how a test ends up green with or without the fix. **Never reproduce with production credentials or by writing to production.** Use data *shaped* like the failing case.
+
+**Every repo keeps a `.claude/verify.md`**: how to run the app, sign in, get test data, and check each key flow. It is repo-owned and not synced; `apply.sh` drops in the template. It is what lets an agent prove a change by using the app instead of claiming it. When a PR needs a step the file doesn't describe, the PR adds that step.
+
+**Simple beats clever.** Reuse the helper that exists before writing a new one. Don't add an abstraction, a parameter or a config option for a second caller that doesn't exist yet. Delete dead code and debug logs instead of commenting them out. Write comments that explain *why*, not ones that restate *what*. A smaller diff is easier to review, easier to revert, and has fewer places for a bug to hide. Reviewers raise these as findings (`/review-pr` simplicity lane).
 
 **Every change ships with the test that would have caught the bug** — the assertion that fails on pre-fix code, not merely a test that passes. A fix once broke every generated scaffold while its tests stayed green, because the fixture asserted components existed but not that the manifest kept their dependencies.
 
@@ -231,6 +248,7 @@ Places where reasonable conventions pulled in different directions; the decision
 - **"Require branch up to date" vs the parallelism tax of many small PRs on shared files.** Kept strict up-to-date — stale-head merges have broken production; the tax is a click and a CI run. If the queue gets deep (>~5 concurrent PRs on shared files), enable GitHub **merge queue**, which performs the up-to-date test automatically and removes the clicks. Auto-merge on.
 - **Squash-only vs stacked PRs.** Squash makes stacks slightly more work (second-lander rebases `--onto main`). Kept squash — the clean linear log and title-as-commit are worth more than stack convenience; keep stacks ≤ 2 deep and prefer independent branches off `main`.
 - **One issue per deferred finding vs a rolling `Small fixes` issue.** Chose the rolling issue for anything below `priority:high`. One issue per finding kept every deferral tracked, but it buried the board in one-line tickets, and each of them became its own PR and its own review. The bundle keeps the tracking (a checklist line is still filed and linked) and pays the review cost once a month. The cost: a nit can wait up to a month. Anything that cannot wait is by definition not a nit, and gets its own issue (§1).
+- **Agents that review and merge on their own vs a human approval.** The first is possible once agents reproduce, test and verify by using the app, and some teams run it, gated on several models agreeing. We take the verification half (`/start-issue`, `.claude/verify.md`, browser and backend passes) and keep the human approval (§7). Our products move real money, and "the models agreed" is not evidence that the change is right. A second model's review is welcome as *input*; `/write-pr` already asks you to disclose it.
 - **Priority labels.** `priority:critical|high|medium|low` over `P0/P1/P2` — the word "critical" carries its own definition; P0 doesn't.
 - **Force-push.** "Never respond with a silent force-push" vs squash culture where rebasing your own branch is normal. Resolution: force-pushing *your own PR branch* is fine; the rule is *announce what changed*. Never force-push shared branches or `main` (ruleset blocks it anyway).
 - **Review effort.** Uniform max-rigour review vs cost. Chose tiered (§4); a real CI suite is what makes the light tier safe, which is why CI comes first.
