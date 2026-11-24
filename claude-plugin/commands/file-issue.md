@@ -14,7 +14,8 @@ Follow `.claude/shared/engineering-rules.md` §1 (Issues). Concretely:
    - What happens: exact commands + real output (or user steps + observed result)
    - Root cause: `file:line`, if known
    - Impact: who hits this, doing what; for security/money, what the attacker gets
-   - Suggested fix (and what it does NOT fix)
+   - Suggested fix (and what it does NOT fix) — name more than one option when more than one exists, and flag any option that would change production state automatically (re-route traffic, rewrite config, retry a payment); the implementer will take the first option you list
+   - Risk: never write "no risk" or "no execution risk" without a hostile-input pass behind it (malformed, oversized, encoded, or caller-supplied values that lift a limit); say what you tried
    - Non-goals / dependencies / ordering
    - Acceptance criteria as checkboxes — testable; code work and ops work as separate boxes
    - How we'd know it's fixed (metric/log/check), and version/commit tested
