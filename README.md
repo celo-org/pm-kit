@@ -43,15 +43,24 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 
 | Command | What it does | Rules |
 |---|---|---|
-| `/file-issue <description>` | Verifies the claim by running it, clusters by fix boundary (same-diff / different-schedule tests), drafts title + body + labels against the issue form | §1 |
+| `/file-issue <description>` | Verifies the claim by running it, clusters by fix boundary (same-diff / different-schedule tests), drafts title + body + labels against the issue form. A low-priority one-liner goes onto the repo's rolling `Small fixes` issue instead of a new ticket | §1 |
 | `/write-pr [issue]` | Fills the PR template from the branch: what it does and what it does *not* do, mutation count, `Closes` vs `Refs` decided from the acceptance boxes. UI touched → drives the headless browser over the changed surface (desktop + phone), fixes until the console is clean, attaches screenshots as evidence | §2–3 |
-| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. Logic-tier PRs get a pass per lane (money, untrusted input, concurrency, infra/deploy, test power, docs), backend findings reproduced with `curl` or a stubbed cloud CLI, the suite run on the merge with `main`, and deploy-state claims checked at the deployment. No approve-with-nits | §4 |
+| `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. Logic-tier PRs get a pass per lane (money, untrusted input, concurrency, infra/deploy, test power, docs), backend findings reproduced with `curl` or a stubbed cloud CLI, the suite run on the merge with `main`, and deploy-state claims checked at the deployment. No approve-with-nits; deferred nits go onto `Small fixes`, and only high/critical ones get their own issue | §4 |
 | `/post-merge <PR>` | Compares what GitHub *actually* closed against what the body said, catches sidebar-link closures, drafts reopens and successor issues | §6 |
 | `/close-pr <PR> <reason>` | Closes without merging while capturing what the work proved, with links pinned to the head SHA | §6 |
-| `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere | §1 |
-| `/board-audit [repo\|all]` | Sorts an open backlog into buckets (stale, missing metadata, duplicates, sprawling, stale PRs), then closes / relabels / reassigns one **confirmed bucket at a time**. The only command that writes in batch — so deletion is never batched, and anything `priority:critical` stops the run | §1 |
+| `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere. Lists PRs ready but unmerged for more than 5 days with who they wait on, and `Small fixes` bundles that are due | §1, §6 |
+| `/board-audit [repo\|all]` | Sorts an open backlog into buckets (stale, missing metadata, duplicates, bundle candidates, sprawling, stale PRs), then closes / relabels / reassigns one **confirmed bucket at a time**. The only command that writes in batch — so deletion is never batched, and anything `priority:critical` stops the run | §1 |
 
 The first five work on one issue or PR; the last two work on the whole board. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
+
+### Two working agreements the commands lean on
+
+- **One `Small fixes` issue per repo.** Nits, typos and low-risk hardening go on it as checklist lines rather than as separate issues and PRs. The bundle ships as one PR at about ten lines or monthly. Critical/high findings, and anything touching money or credentials, still get their own issue (rules §1). Run `protection/create-labels.sh` once per repo to get the `bundle` label.
+- **The author owns the merge.** If a ready PR has gone two working days without a review or a merge, ping the reviewer with a date. If it is still waiting after a week, it is a blocker in the weekly status (rules §6).
+
+## Friction with the kit
+
+The kit exists to make the work easier. If a command keeps creating busywork, blocks something it shouldn't, or asks for the same thing twice, that is a defect in the kit. Open a PR or an issue on `pm-kit` that says what it made harder and how often. Changes land like any other: through a PR, with a plugin version bump so `claude plugin update` picks them up.
 
 ## Bootstrap a repo
 

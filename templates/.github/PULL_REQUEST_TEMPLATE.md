@@ -92,4 +92,4 @@ Refs #
 - [ ] Questions for the maintainer marked clearly at the end (or "none")
 
 <!-- Agent co-author trailers stay (Co-Authored-By: …) — honest and free.
-     MERGER: after merge, run /post-merge <PR#> — check what closed, file successors, record nits as issues. -->
+     MERGER: after merge, run /post-merge <PR#> — check what closed, file successors, add leftover nits to the repo's `Small fixes` issue (critical/high findings get their own issue). -->

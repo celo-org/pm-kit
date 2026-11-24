@@ -70,6 +70,7 @@ Sort every open item into exactly one bucket, most-mechanical first:
 | **B. Missing metadata** | any of: no `priority:*`, no type label, no `size:*`, no assignee, not on the board (rules §1 requires all five at filing) | needs a decision — enumerate (§3), naming which are missing |
 | **C. Likely duplicates** | high title/body similarity, or same file-set implied | merge candidates — enumerate (§3) |
 | **D. Same-diff clusters** | different issues one diff would close (rules §1 "same-diff test") | merge into one ticket with a checklist |
+| **D2. Bundle candidates** | `priority:low`/`medium` one-liners (nit, typo, small hardening) that touch no money, credentials or user-visible data (rules §1 "Small fixes") | move each onto the repo's `Small fixes` issue as a checklist line, then close it pointing there |
 | **E. Sprawling** | >1 fix-unit, or mixes a live defect with hardening (different-schedule test) | split into lettered children A–G with a status table on the parent |
 | **F. No acceptance criteria** | user story / feature with no testable checklist | rewrite needed — flag for the owner |
 | **G. Healthy** | one fix-unit, priority set, criteria testable | leave alone; count only |
@@ -79,7 +80,7 @@ Print bucket counts. **Do not act yet.**
 
 ## 3. Enumerate only what needs judgement
 
-For buckets B–F and H, list the items compactly — one line each: `#N · title · why it's in this bucket · proposed action`. Cap at 25 per message; if a bucket is larger, do it in pages and record progress in `.claude/board-audit.md`.
+For buckets B–F (including D2) and H, list the items compactly — one line each: `#N · title · why it's in this bucket · proposed action`. Cap at 25 per message; if a bucket is larger, do it in pages and record progress in `.claude/board-audit.md`.
 
 Verify before proposing: this is where you spend the body fetch — `gh issue view N --json body,comments` for the ≤25 items on the current page only, never for the whole bucket. Read the body, not just the title, for anything you'd close or merge. A duplicate that isn't one costs more than a duplicate left standing. For anything touching money, security, or a live defect, propose `keep` unless you are certain.
 
@@ -96,7 +97,8 @@ Plus a per-issue table for B–F and H with `#N | action | status`. Statuses: `p
 
 Confirm one bucket at a time; never all at once. Then:
 - **Close** with evidence, never "done": `gh issue close N --comment "Closing: <what was verified / superseded by #M / no longer reproduces on <version>>. Reopen if it still happens."`
-- **Label**: existing labels only (`bug` `enhancement` `chore` `priority:critical|high|medium|low` `size:S|M|L` `status: triage`). Never invent a label; if none fits, say so.
+- **Label**: existing labels only (`bug` `enhancement` `chore` `priority:critical|high|medium|low` `size:S|M|L` `status: triage`, and `bundle` only on a repo's single `Small fixes` issue). Never invent a label; if none fits, say so.
+- **Fold into the bundle** (D2): find the repo's open `Small fixes` issue (`gh issue list --label bundle --state open`), or create one (labels `chore`, `priority:low`, `bundle`) if none is open. Edit its body to add one line per item, `- [ ] <title> — <file:line if known> — was #N`. Then close each item with `gh issue close N --comment "Folded into #<bundle> (small-fixes bundle, rules §1)."`. One bundle edit per repo per batch.
 - **Assign**: default to the person most recently active in the code the issue touches (rules §1). If you can't tell, propose no assignee rather than guessing.
 - **Merge duplicates**: comment on the survivor listing what it absorbs, then close the others pointing at it. Move any unique content across first.
 - **Split sprawl**: draft the children (`/file-issue` shape) and a status table on the parent; create only after I approve the drafts.
