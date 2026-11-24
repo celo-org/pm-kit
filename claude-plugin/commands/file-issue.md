@@ -18,7 +18,8 @@ Follow `.claude/shared/engineering-rules.md` §1 (Issues). Concretely:
    - Suggested fix (and what it does NOT fix) — name more than one option when more than one exists, and flag any option that would change production state automatically (re-route traffic, rewrite config, retry a payment); the implementer will take the first option you list
    - Risk: never write "no risk" or "no execution risk" without a hostile-input pass behind it (malformed, oversized, encoded, or caller-supplied values that lift a limit); say what you tried
    - Non-goals / dependencies / ordering
-   - Acceptance criteria as checkboxes — testable; code work and ops work as separate boxes
+   - Context: where to start. Files and modules (`file:line`), existing helpers to reuse, related issues and PRs, docs and designs, and constraints (stack, what must not change). Write it so a junior teammate's agent could start without asking you.
+   - Acceptance criteria as **verification scenarios** — checkboxes someone could run or click ("given …, when …, then …"), including the edge cases; code work and ops work as separate boxes. These become the failing tests in `/start-issue`.
    - How we'd know it's fixed (metric/log/check), and version/commit tested
    - Open questions marked OPEN ("number left to implementer") so the implementer surfaces the call instead of guessing
    - Prior art / related code linked at a commit SHA, never a branch
