@@ -74,7 +74,7 @@ And the plugin: `claude plugin marketplace add celo-org/pm-kit && claude plugin 
 - `e2e-smoke/` — the preview smoke spec, kept once here and checked out by `ci-e2e-smoke` (see its header for what green means)
 - `templates/` — everything synced into repos, plus `CLAUDE.md.template`
 - `templates/.claude/shared/engineering-rules.md` — the merged playbook (issues, PRs, tests, reviews, merging, closing, contradictions log)
-- `templates/.claude/shared/money-path-checklist.md` — 23 recurring defects for money/security diffs
+- `templates/.claude/shared/money-path-checklist.md` — 24 recurring defects for money/security diffs
 - `templates/.claude/shared/tester-mode-pattern.md` — run real-money paths in production behind a restricted audience; porting checklist
 - `claude-plugin/` — commands; `.claude-plugin/marketplace.json` — marketplace manifest
 - `protection/` — `org-ruleset-main.json` + `apply-org-ruleset.sh` (one org ruleset), `ruleset-main.json` + `apply-protection.sh` (per-repo fallback + merge settings), `create-labels.sh`
