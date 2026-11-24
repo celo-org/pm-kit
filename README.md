@@ -43,6 +43,7 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 
 | Command | What it does | Rules |
 |---|---|---|
+| `/start-issue <N>` | Builds an issue in a fixed order. It fills the ticket's gaps by asking you up to five sharp questions (each with a proposed answer) before writing code, and proposes a split if the work is too big for one PR. Then it reproduces the bug or records the current behaviour, traces the root cause, and writes the failing test first. After that it makes the smallest fix, simplifies its own diff, and verifies every scenario by using the app per `.claude/verify.md`. Hands off to `/write-pr` | §1, §3 |
 | `/file-issue <description>` | Verifies the claim by running it, clusters by fix boundary (same-diff / different-schedule tests), drafts title + body + labels against the issue form. A low-priority one-liner goes onto the repo's rolling `Small fixes` issue instead of a new ticket | §1 |
 | `/write-pr [issue]` | Fills the PR template from the branch: what it does and what it does *not* do, mutation count, `Closes` vs `Refs` decided from the acceptance boxes. UI touched → drives the headless browser over the changed surface (desktop + phone), fixes until the console is clean, attaches screenshots as evidence | §2–3 |
 | `/review-pr <PR>` | Tiers the review by risk, checks the branch out and runs it, clicks through changed UI on the Vercel preview with the browser tools, attempts to refute every claim in the body. Logic-tier PRs get a pass per lane (money, untrusted input, concurrency, infra/deploy, test power, docs), backend findings reproduced with `curl` or a stubbed cloud CLI, the suite run on the merge with `main`, and deploy-state claims checked at the deployment. No approve-with-nits; deferred nits go onto `Small fixes`, and only high/critical ones get their own issue | §4 |
@@ -51,9 +52,12 @@ Each one turns a section of `engineering-rules.md` into procedure. **Every comma
 | `/weekly-status [since]` | Drafts the Friday per-product status from merged PRs and closed issues — evidence not impressions, under 300 words, printed in chat and written nowhere. Lists PRs ready but unmerged for more than 5 days with who they wait on, and `Small fixes` bundles that are due | §1, §6 |
 | `/board-audit [repo\|all]` | Sorts an open backlog into buckets (stale, missing metadata, duplicates, bundle candidates, sprawling, stale PRs), then closes / relabels / reassigns one **confirmed bucket at a time**. The only command that writes in batch — so deletion is never batched, and anything `priority:critical` stops the run | §1 |
 
-The first five work on one issue or PR; the last two work on the whole board. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
+The first six work on one issue or PR; the last two work on the whole board. A typical loop: `/file-issue` → `/start-issue` → `/write-pr` → `/review-pr` → `/post-merge`. `/board-audit` resumes across sessions from `.claude/board-audit.md`.
 
-### Two working agreements the commands lean on
+### Working agreements the commands lean on
+
+- **Tickets carry task, context and verification scenarios.** The issue forms ask for all three, so whoever picks a ticket up, a junior teammate or an agent, can start without asking where to look (rules §1).
+- **Every repo has a `.claude/verify.md`.** It says how to run the app, sign in, get test data and check each key flow. `apply.sh` drops in the template; fill it in once (or ask Claude Code to draft it from the code) and keep it current in every PR that changes a flow (rules §3).
 
 - **One `Small fixes` issue per repo.** Nits, typos and low-risk hardening go on it as checklist lines rather than as separate issues and PRs. The bundle ships as one PR at about ten lines or monthly. Critical/high findings, and anything touching money or credentials, still get their own issue (rules §1). Run `protection/create-labels.sh` once per repo to get the `bundle` label.
 - **The author owns the merge.** If a ready PR has gone two working days without a review or a merge, ping the reviewer with a date. If it is still waiting after a week, it is a blocker in the weekly status (rules §6).
@@ -68,7 +72,7 @@ The kit exists to make the work easier. If a command keeps creating busywork, bl
 cd ~/code/<repo> && git checkout -b <handle>/pm-kit-bootstrap
 bash ~/code/pm-kit/apply.sh
 ```
-Then: fill in `CLAUDE.md`, ensure `lint`/`test`/`typecheck` scripts exist, open the PR. Then labels + protection:
+Then: fill in `CLAUDE.md` and `.claude/verify.md`, ensure `lint`/`test`/`typecheck` scripts exist, open the PR. Then labels + protection:
 ```bash
 bash pm-kit/protection/create-labels.sh owner/repo
 bash pm-kit/protection/apply-org-ruleset.sh          # once, org-level (needs org admin)
@@ -81,7 +85,7 @@ And the plugin: `claude plugin marketplace add celo-org/pm-kit && claude plugin 
 - `.github/workflows/` — reusable CI (`ci-node`, `ci-hardhat`, `ci-foundry`, `ci-python`, `ci-docs-mintlify`), `ci-e2e-smoke` (preview smoke), `verify-release-version`, `sync-templates`
 - `callers/` — thin per-repo workflows (`ci-*`, `e2e-smoke` on `deployment_status`, `issue-priority-label`)
 - `e2e-smoke/` — the preview smoke spec, kept once here and checked out by `ci-e2e-smoke` (see its header for what green means)
-- `templates/` — everything synced into repos, plus `CLAUDE.md.template`
+- `templates/` — everything synced into repos, plus the repo-owned starters `CLAUDE.md.template` and `.claude/verify.md.template` (copied once by `apply.sh`, never synced)
 - `templates/.claude/shared/engineering-rules.md` — the merged playbook (issues, PRs, tests, reviews, merging, closing, contradictions log)
 - `templates/.claude/shared/money-path-checklist.md` — 24 recurring defects for money/security diffs
 - `templates/.claude/shared/tester-mode-pattern.md` — run real-money paths in production behind a restricted audience; porting checklist

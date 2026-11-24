@@ -24,6 +24,7 @@
 
 Money/security diffs additionally run: @.claude/shared/money-path-checklist.md
 Before a real-money / real-send path goes public, it runs in production behind tester mode: @.claude/shared/tester-mode-pattern.md
+How to run this app and prove a change works by using it: @.claude/verify.md
 
 The ten you must never violate, even without reading the above:
 1. Never push to `main`. Branch `<handle>/<issue>-<slug>` → PR → squash. Title = the commit on `main` (Conventional Commits, scoped, outcome).
@@ -33,11 +34,11 @@ The ten you must never violate, even without reading the above:
 5. Every claim in an issue/PR/review is evidence-backed: commands + output, `file:line`. "Confirmed" means you ran it. Measured over reasoned — thresholds and constants pinned in a test, not a comment.
 6. Say what the PR does NOT do (with numbers). Say what it actually does, even beyond the ticket. Flag judgement calls and bundled product changes for the maintainer.
 7. On review feedback: reproduce first, fix, audit your own fix, report what it taught. Answer every point FIXED / NOT-FIXED / DISAGREE-with-measurement; never a silent push; never delete a wrong claim — strike it through.
-8. Use only existing labels: `bug` `enhancement` `chore` `priority:critical|high|medium|low` `status: triage`. Never invent labels.
+8. Use only existing labels: `bug` `enhancement` `chore` `priority:critical|high|medium|low` `size:S|M|L` `status: triage` (`bundle` only on the `Small fixes` issue). Never invent labels.
 9. Ask before anything outward-facing or irreversible (external repos, posting, deleting, force-pushing shared branches). Propose, never execute.
 10. No secrets in diffs. New env vars → `.env.example` + runbook, in the same PR.
 
-Use the plugin commands: `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`. At board level: `/weekly-status` (Friday status from evidence), `/board-audit` (triage the backlog in buckets).
+Working an issue? Start with `/start-issue <N>`: it sharpens the spec and asks before coding, reproduces the bug, writes the failing test first, and verifies every scenario. Then use the plugin commands: `/file-issue`, `/write-pr`, `/review-pr`, `/post-merge`, `/close-pr`. At board level: `/weekly-status` (Friday status from evidence), `/board-audit` (triage the backlog in buckets).
 
 ## Product context
 
